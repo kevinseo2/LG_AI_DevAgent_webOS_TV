@@ -1,0 +1,156 @@
+{
+  "apiInfo": {
+    "serviceName": "Settings Service",
+    "serviceUri": "luna://com.webos.service.settings",
+    "category": "system",
+    "description": "시스템 설정 값을 조회하기 위한 메서드를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true,
+        "22": true,
+        "23": true,
+        "24": true,
+        "25": true
+      },
+      "simulator": true,
+      "emulator": {
+        "1.2": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": "partially"
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "getSystemSettings",
+      "description": "시스템 설정 값들을 조회합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "keys",
+          "required": true,
+          "type": "array",
+          "description": "조회할 설정 키들의 배열입니다."
+        },
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "설정 변경을 구독할지 여부입니다.",
+          "defaultValue": false
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "settings",
+            "type": "object",
+            "required": false,
+            "description": "조회된 설정 값들입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "시스템 설정 조회",
+          "code": "var request = webOS.service.request('luna://com.webos.service.settings', {\n  method: 'getSystemSettings',\n  parameters: {\n    keys: ['localeInfo', 'country']\n  },\n  onSuccess: function (inResponse) {\n    console.log('Settings:', inResponse.settings);\n    console.log('Locale:', inResponse.settings.localeInfo);\n    console.log('Country:', inResponse.settings.country);\n  },\n  onFailure: function (inError) {\n    console.log('Get settings failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "setSystemSettings",
+      "description": "시스템 설정 값을 설정합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "settings",
+          "required": true,
+          "type": "object",
+          "description": "설정할 키-값 쌍들입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "시스템 설정 변경",
+          "code": "var request = webOS.service.request('luna://com.webos.service.settings', {\n  method: 'setSystemSettings',\n  parameters: {\n    settings: {\n      'brightness': 80,\n      'contrast': 75\n    }\n  },\n  onSuccess: function (inResponse) {\n    console.log('Settings updated successfully');\n  },\n  onFailure: function (inError) {\n    console.log('Set settings failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-settings-get",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.settings', {",
+          "    method: 'getSystemSettings',",
+          "    parameters: {",
+          "        keys: [${1:'localeInfo', 'country'}],",
+          "        subscribe: ${2:false}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${3:// Success handling}",
+          "        console.log('Settings:', inResponse.settings);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${4:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "시스템 설정 조회"
+      },
+      {
+        "prefix": "webos-settings-set",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.settings', {",
+          "    method: 'setSystemSettings',",
+          "    parameters: {",
+          "        settings: {",
+          "            '${1:key}': ${2:value}",
+          "        }",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${3:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${4:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "시스템 설정 변경"
+      }
+    ]
+  }
+}

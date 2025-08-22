@@ -1,0 +1,97 @@
+{
+  "apiInfo": {
+    "serviceName": "BLE GATT",
+    "serviceUri": "luna://com.webos.service.ble",
+    "category": "network",
+    "description": "BLE GATT(Bluetooth Low Energy Generic Attribute Profile) 기능을 위한 메서드를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": false,
+        "2.x": false,
+        "3.x": false,
+        "4.x": false,
+        "5.x": false,
+        "6.x": false,
+        "22": false,
+        "23": false,
+        "24": true,
+        "25": true
+      },
+      "simulator": false,
+      "emulator": {
+        "1.2": false,
+        "2.x": false,
+        "3.x": false,
+        "4.x": false,
+        "5.x": false,
+        "6.x": false
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "startScan",
+      "description": "BLE 디바이스 스캔을 시작합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "스캔 결과를 지속적으로 수신할지 여부입니다.",
+          "defaultValue": false
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "devices",
+            "type": "array",
+            "required": false,
+            "description": "발견된 BLE 디바이스 목록입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "BLE 스캔 시작",
+          "code": "var request = webOS.service.request('luna://com.webos.service.ble', {\n  method: 'startScan',\n  parameters: {\n    subscribe: true\n  },\n  onSuccess: function (inResponse) {\n    console.log('BLE devices found:', inResponse.devices);\n  },\n  onFailure: function (inError) {\n    console.log('BLE scan failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-ble-scan",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.ble', {",
+          "    method: 'startScan',",
+          "    parameters: {",
+          "        subscribe: ${1:true}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "        console.log('BLE devices:', inResponse.devices);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "BLE 디바이스 스캔"
+      }
+    ]
+  }
+}

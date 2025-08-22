@@ -1,0 +1,129 @@
+{
+  "apiInfo": {
+    "serviceName": "DRM",
+    "serviceUri": "luna://com.webos.service.drm",
+    "category": "media",
+    "description": "DRM 클라이언트 관리, DRM 메시지 전송, DRM 권한 오류 정보 구독을 위한 메서드를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true,
+        "22": true,
+        "23": true,
+        "24": true,
+        "25": true
+      },
+      "simulator": false,
+      "emulator": {
+        "1.2": false,
+        "2.x": false,
+        "3.x": false,
+        "4.x": false,
+        "5.x": false,
+        "6.x": false
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "load",
+      "description": "DRM 클라이언트를 로드합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "drmType",
+          "required": true,
+          "type": "string",
+          "description": "로드할 DRM 타입입니다.",
+          "enum": ["widevine", "playready"]
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "clientId",
+            "type": "string",
+            "required": false,
+            "description": "로드된 DRM 클라이언트의 ID입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "DRM 클라이언트 로드",
+          "code": "var request = webOS.service.request('luna://com.webos.service.drm', {\n  method: 'load',\n  parameters: {\n    drmType: 'widevine'\n  },\n  onSuccess: function (inResponse) {\n    console.log('DRM client loaded:', inResponse.clientId);\n  },\n  onFailure: function (inError) {\n    console.log('DRM load failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "unload",
+      "description": "DRM 클라이언트를 언로드합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "clientId",
+          "required": true,
+          "type": "string",
+          "description": "언로드할 DRM 클라이언트의 ID입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "DRM 클라이언트 언로드",
+          "code": "var request = webOS.service.request('luna://com.webos.service.drm', {\n  method: 'unload',\n  parameters: {\n    clientId: 'client123'\n  },\n  onSuccess: function (inResponse) {\n    console.log('DRM client unloaded');\n  },\n  onFailure: function (inError) {\n    console.log('DRM unload failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-drm-load",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.drm', {",
+          "    method: 'load',",
+          "    parameters: {",
+          "        drmType: '${1|widevine,playready|}'",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "        console.log('DRM client ID:', inResponse.clientId);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "DRM 클라이언트 로드"
+      }
+    ]
+  }
+}

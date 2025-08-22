@@ -1,0 +1,142 @@
+{
+  "apiInfo": {
+    "serviceName": "Magic Remote",
+    "serviceUri": "luna://com.webos.service.magicremote",
+    "category": "device",
+    "description": "센서 및 페어링과 같은 매직 리모컨 관련 기능을 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": "partially",
+        "2.x": "partially",
+        "3.x": "partially",
+        "4.x": "partially",
+        "5.x": "partially",
+        "6.x": "partially",
+        "22": "partially",
+        "23": "partially",
+        "24": true,
+        "25": true
+      },
+      "simulator": "partially",
+      "emulator": {
+        "1.2": false,
+        "2.x": false,
+        "3.x": false,
+        "4.x": false,
+        "5.x": false,
+        "6.x": false
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "getSensorData",
+      "description": "매직 리모컨의 센서 데이터를 조회합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "센서 데이터 변경을 구독할지 여부입니다.",
+          "defaultValue": false
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "gyroscope",
+            "type": "object",
+            "required": false,
+            "description": "자이로스코프 데이터입니다."
+          },
+          {
+            "name": "accelerometer",
+            "type": "object",
+            "required": false,
+            "description": "가속도계 데이터입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "센서 데이터 조회",
+          "code": "var request = webOS.service.request('luna://com.webos.service.magicremote', {\n  method: 'getSensorData',\n  parameters: {\n    subscribe: true\n  },\n  onSuccess: function (inResponse) {\n    console.log('Gyroscope:', inResponse.gyroscope);\n    console.log('Accelerometer:', inResponse.accelerometer);\n  },\n  onFailure: function (inError) {\n    console.log('Get sensor data failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "getPointerState",
+      "description": "매직 리모컨의 포인터 상태를 조회합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "포인터 상태 변경을 구독할지 여부입니다.",
+          "defaultValue": false
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "pointerVisible",
+            "type": "boolean",
+            "required": false,
+            "description": "포인터 가시성 상태입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "포인터 상태 조회",
+          "code": "var request = webOS.service.request('luna://com.webos.service.magicremote', {\n  method: 'getPointerState',\n  parameters: {\n    subscribe: true\n  },\n  onSuccess: function (inResponse) {\n    console.log('Pointer visible:', inResponse.pointerVisible);\n  },\n  onFailure: function (inError) {\n    console.log('Get pointer state failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-magic-remote-sensor",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.magicremote', {",
+          "    method: 'getSensorData',",
+          "    parameters: {",
+          "        subscribe: ${1:true}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "        console.log('Sensor data:', inResponse);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "매직 리모컨 센서 데이터 조회"
+      }
+    ]
+  }
+}

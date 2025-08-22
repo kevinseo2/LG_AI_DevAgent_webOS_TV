@@ -1,0 +1,288 @@
+{
+  "apiInfo": {
+    "serviceName": "Activity Manager",
+    "serviceUri": "luna://com.palm.activitymanager",
+    "category": "system",
+    "description": "시스템의 다양한 부분을 모니터링하고, 해당 이벤트가 발생할 때 서비스를 시작합니다. Activities는 주기적으로 또는 특정 시간에 작업을 스케줄링하는 데에도 사용할 수 있습니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15"
+  },
+  "methods": [
+    {
+      "name": "adopt",
+      "description": "앱이나 서비스가 Activity의 부모로 전환되려는 의지를 등록합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "activityId",
+          "required": true,
+          "type": "number",
+          "description": "Activity ID. activityName과 둘 중 하나는 필수입니다."
+        },
+        {
+          "name": "activityName",
+          "required": true,
+          "type": "string",
+          "description": "Activity 이름. activityId와 둘 중 하나는 필수입니다."
+        },
+        {
+          "name": "wait",
+          "required": true,
+          "type": "boolean",
+          "description": "Activity가 해제될 때까지 대기할지 여부를 결정하는 플래그입니다."
+        },
+        {
+          "name": "subscribe",
+          "required": true,
+          "type": "boolean",
+          "description": "구독 여부를 결정하는 플래그입니다. true: 구독, false: 구독하지 않음 (기본값)",
+          "defaultValue": false
+        },
+        {
+          "name": "detailedEvents",
+          "required": false,
+          "type": "boolean",
+          "description": "Activity Manager가 Activity의 요구사항 상태가 변경될 때 update 이벤트를 생성하도록 하는 플래그입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타내는 플래그입니다. true: 성공, false: 실패"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "메서드가 실패할 경우 오류 코드를 포함합니다. 실패한 경우에만 반환됩니다."
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "메서드가 실패할 경우 오류 텍스트를 포함합니다. 실패한 경우에만 반환됩니다."
+          },
+          {
+            "name": "adopted",
+            "type": "boolean",
+            "required": false,
+            "description": "Activity가 채택되었는지 여부입니다."
+          }
+        ],
+        "subscription": {
+          "returnValue": {
+            "type": "boolean",
+            "description": "요청의 성공/실패를 나타내는 플래그입니다."
+          },
+          "activityId": {
+            "type": "number",
+            "description": "생성된 Activity ID입니다. 상태 업데이트가 있을 때 구독을 받을 수 있습니다."
+          },
+          "event": {
+            "type": "string",
+            "description": "이 activity가 수행한 작업입니다. Activity Manager는 요구사항이 충족되면 start 이벤트를 생성하고, 이 결과를 구독자들에게 반환합니다."
+          },
+          "activity": {
+            "type": "object",
+            "description": "Activity 객체입니다."
+          }
+        }
+      },
+      "errors": [
+        {
+          "code": 2,
+          "message": "No such file or directory",
+          "description": "파일이나 디렉터리가 존재하지 않습니다."
+        },
+        {
+          "code": 11,
+          "message": "Operation blocked",
+          "description": "작업이 차단되었습니다."
+        },
+        {
+          "code": 12,
+          "message": "Out of memory",
+          "description": "메모리가 부족합니다."
+        },
+        {
+          "code": 13,
+          "message": "Permission denied",
+          "description": "권한이 거부되었습니다."
+        },
+        {
+          "code": 17,
+          "message": "File already exists",
+          "description": "파일이 이미 존재합니다."
+        },
+        {
+          "code": 22,
+          "message": "Invalid argument",
+          "description": "잘못된 인수입니다."
+        },
+        {
+          "code": 38,
+          "message": "Function not implemented",
+          "description": "함수가 구현되지 않았습니다."
+        },
+        {
+          "code": -1000,
+          "message": "Internal error",
+          "description": "내부 오류입니다."
+        }
+      ],
+      "examples": [
+        {
+          "title": "Activity 채택",
+          "code": "var request = webOS.service.request('luna://com.palm.activitymanager', {\n  method: 'adopt',\n  parameters: {\n    activityId: 90,\n    wait: true,\n    subscribe: true\n  },\n  onSuccess: function (inResponse) {\n    console.log('Adopt success:', inResponse.adopted);\n  },\n  onFailure: function (inError) {\n    console.log('Adopt failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "cancel",
+      "description": "지정된 Activity를 종료하고 모든 구독자에게 cancel 이벤트를 보냅니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "activityId",
+          "required": true,
+          "type": "number",
+          "description": "종료할 Activity의 ID입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타내는 플래그입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "Activity 취소",
+          "code": "var request = webOS.service.request('luna://com.palm.activitymanager', {\n  method: 'cancel',\n  parameters: {\n    activityId: 90\n  },\n  onSuccess: function (inResponse) {\n    console.log('Cancel success:', inResponse.returnValue);\n  },\n  onFailure: function (inError) {\n    console.log('Cancel failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "name": "Activity",
+      "description": "Activity 객체는 시스템에서 특정 작업 항목을 나타냅니다.",
+      "properties": [
+        {
+          "name": "activityId",
+          "type": "number",
+          "required": true,
+          "description": "Activity의 고유 식별자입니다."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "description": "Activity의 이름입니다."
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "description": "Activity에 대한 설명입니다."
+        },
+        {
+          "name": "type",
+          "type": "object",
+          "required": false,
+          "description": "Activity의 타입 정보입니다."
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-adopt",
+        "body": [
+          "webOS.service.request('luna://com.palm.activitymanager', {",
+          "    method: 'adopt',",
+          "    parameters: {",
+          "        activityId: ${1:activityId},",
+          "        wait: ${2:true},",
+          "        subscribe: ${3:true}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${4:// Success handling}",
+          "        console.log('Adopt success:', inResponse.adopted);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${5:// Error handling}",
+          "        console.log('Adopt failed:', inError.errorText);",
+          "    }",
+          "});"
+        ],
+        "description": "Activity Manager의 adopt 메서드를 호출하는 스니펫"
+      },
+      {
+        "prefix": "webos-cancel",
+        "body": [
+          "webOS.service.request('luna://com.palm.activitymanager', {",
+          "    method: 'cancel',",
+          "    parameters: {",
+          "        activityId: ${1:activityId}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "        console.log('Cancel success:', inResponse.returnValue);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "        console.log('Cancel failed:', inError.errorText);",
+          "    }",
+          "});"
+        ],
+        "description": "Activity Manager의 cancel 메서드를 호출하는 스니펫"
+      }
+    ],
+    "completionItems": [
+      {
+        "label": "adopt",
+        "kind": "Method",
+        "documentation": "앱이나 서비스가 Activity의 부모로 전환되려는 의지를 등록합니다.",
+        "insertText": "adopt",
+        "detail": "luna://com.palm.activitymanager"
+      },
+      {
+        "label": "cancel",
+        "kind": "Method",
+        "documentation": "지정된 Activity를 종료하고 모든 구독자에게 cancel 이벤트를 보냅니다.",
+        "insertText": "cancel",
+        "detail": "luna://com.palm.activitymanager"
+      }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.palm\\.activitymanager'",
+        "checks": [
+          {
+            "field": "method",
+            "validValues": ["adopt", "cancel", "complete", "create", "release", "start", "stop"]
+          },
+          {
+            "field": "parameters.activityId",
+            "required": true,
+            "type": "number"
+          }
+        ]
+      }
+    ]
+  }
+}

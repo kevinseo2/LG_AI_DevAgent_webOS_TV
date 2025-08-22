@@ -1,0 +1,171 @@
+{
+  "apiInfo": {
+    "serviceName": "TV Device Information",
+    "serviceUri": "luna://com.webos.service.tv.systemproperty",
+    "category": "device",
+    "description": "TV 시스템 정보를 조회하기 위한 메서드를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": "partially",
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true,
+        "22": true,
+        "23": true,
+        "24": true,
+        "25": true
+      },
+      "simulator": true,
+      "emulator": {
+        "1.2": "partially",
+        "2.x": "partially",
+        "3.x": "partially",
+        "4.x": "partially",
+        "5.x": "partially",
+        "6.x": true
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "getSystemInfo",
+      "description": "TV 시스템 정보를 조회합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "keys",
+          "required": true,
+          "type": "array",
+          "description": "조회할 시스템 정보 키들의 배열입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "modelName",
+            "type": "string",
+            "required": false,
+            "description": "TV 모델명입니다."
+          },
+          {
+            "name": "firmwareVersion",
+            "type": "string",
+            "required": false,
+            "description": "펌웨어 버전입니다."
+          },
+          {
+            "name": "UHD",
+            "type": "boolean",
+            "required": false,
+            "description": "UHD 지원 여부입니다."
+          },
+          {
+            "name": "sdkVersion",
+            "type": "string",
+            "required": false,
+            "description": "webOS SDK 버전입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "TV 시스템 정보 조회",
+          "code": "var request = webOS.service.request('luna://com.webos.service.tv.systemproperty', {\n  method: 'getSystemInfo',\n  parameters: {\n    keys: ['modelName', 'firmwareVersion', 'UHD', 'sdkVersion']\n  },\n  onSuccess: function (inResponse) {\n    console.log('Model:', inResponse.modelName);\n    console.log('Firmware:', inResponse.firmwareVersion);\n    console.log('UHD Support:', inResponse.UHD);\n    console.log('SDK Version:', inResponse.sdkVersion);\n  },\n  onFailure: function (inError) {\n    console.log('Get system info failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "getSystemProperty",
+      "description": "특정 시스템 속성을 조회합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "key",
+          "required": true,
+          "type": "string",
+          "description": "조회할 속성 키입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "value",
+            "type": "string",
+            "required": false,
+            "description": "조회된 속성 값입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "시스템 속성 조회",
+          "code": "var request = webOS.service.request('luna://com.webos.service.tv.systemproperty', {\n  method: 'getSystemProperty',\n  parameters: {\n    key: 'modelName'\n  },\n  onSuccess: function (inResponse) {\n    console.log('Property value:', inResponse.value);\n  },\n  onFailure: function (inError) {\n    console.log('Get property failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-tv-systeminfo",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.tv.systemproperty', {",
+          "    method: 'getSystemInfo',",
+          "    parameters: {",
+          "        keys: [${1:'modelName', 'firmwareVersion', 'UHD'}]",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "        console.log('System info:', inResponse);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "TV 시스템 정보 조회"
+      },
+      {
+        "prefix": "webos-tv-property",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.tv.systemproperty', {",
+          "    method: 'getSystemProperty',",
+          "    parameters: {",
+          "        key: '${1:modelName}'",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "        console.log('Property:', inResponse.value);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "TV 시스템 속성 조회"
+      }
+    ]
+  }
+}

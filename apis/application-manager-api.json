@@ -1,0 +1,113 @@
+{
+  "apiInfo": {
+    "serviceName": "Application Manager",
+    "serviceUri": "luna://com.webos.applicationManager",
+    "category": "system",
+    "description": "지정된 애플리케이션을 명시적으로 실행하거나, 요청된 명령 및 리소스 유형에 따라 상주 애플리케이션을 암시적으로 실행하는 메서드를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true,
+        "22": true,
+        "23": true,
+        "24": true,
+        "25": true
+      },
+      "simulator": true,
+      "emulator": {
+        "1.2": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "launch",
+      "description": "지정된 애플리케이션을 실행합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "id",
+          "required": true,
+          "type": "string",
+          "description": "실행할 애플리케이션의 ID입니다."
+        },
+        {
+          "name": "params",
+          "required": false,
+          "type": "object",
+          "description": "애플리케이션에 전달할 매개변수입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "appId",
+            "type": "string",
+            "required": false,
+            "description": "실행된 애플리케이션의 ID입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "애플리케이션 실행",
+          "code": "var request = webOS.service.request('luna://com.webos.applicationManager', {\n  method: 'launch',\n  parameters: {\n    id: 'com.webos.app.browser',\n    params: { url: 'https://webostv.developer.lge.com' }\n  },\n  onSuccess: function (inResponse) {\n    console.log('Launch success:', inResponse.appId);\n  },\n  onFailure: function (inError) {\n    console.log('Launch failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-app-launch",
+        "body": [
+          "webOS.service.request('luna://com.webos.applicationManager', {",
+          "    method: 'launch',",
+          "    parameters: {",
+          "        id: '${1:appId}',",
+          "        params: ${2:{\\}}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${3:// Success handling}",
+          "        console.log('Launch success:', inResponse.appId);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${4:// Error handling}",
+          "        console.log('Launch failed:', inError.errorText);",
+          "    }",
+          "});"
+        ],
+        "description": "Application Manager의 launch 메서드 호출"
+      }
+    ],
+    "completionItems": [
+      {
+        "label": "launch",
+        "kind": "Method",
+        "documentation": "지정된 애플리케이션을 실행합니다.",
+        "insertText": "launch",
+        "detail": "luna://com.webos.applicationManager"
+      }
+    ]
+  }
+}

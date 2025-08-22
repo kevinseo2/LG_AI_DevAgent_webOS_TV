@@ -1,0 +1,300 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://webostv.developer.lge.com/schemas/appinfo.json",
+  "title": "webOS TV appinfo.json Schema",
+  "description": "Schema for webOS TV application metadata file (appinfo.json)",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "type",
+    "main",
+    "icon",
+    "version"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique app ID formed according to reverse DNS naming conventions",
+      "pattern": "^(?!com\\.(palm|webos|lge|palmdts)\\.)([a-z0-9][a-z0-9\\-\\.]*[a-z0-9])$",
+      "minLength": 2,
+      "examples": [
+        "com.mycompany.app.appname",
+        "com.example.myapp"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "description": "App title shown on the Launcher and app window",
+      "minLength": 1,
+      "examples": ["MyApp", "Sample Application"]
+    },
+    "type": {
+      "type": "string",
+      "description": "App type",
+      "enum": ["web"],
+      "default": "web"
+    },
+    "main": {
+      "type": "string",
+      "description": "Launch point for the app (relative to appinfo.json)",
+      "pattern": "\\.html$",
+      "default": "index.html",
+      "examples": ["index.html", "app.html"]
+    },
+    "icon": {
+      "type": "string",
+      "description": "Small icon file (80x80 pixels in PNG format, relative to appinfo.json)",
+      "pattern": "\\.png$",
+      "examples": ["AppName_80x80.png", "icon.png"]
+    },
+    "version": {
+      "type": "string",
+      "description": "App version number (three non-negative integers separated by periods)",
+      "pattern": "^(0|[1-9]\\d{0,8})\\.(0|[1-9]\\d{0,8})\\.(0|[1-9]\\d{0,8})$",
+      "default": "1.0.0",
+      "examples": ["1.0.0", "2.1.3", "10.15.2"]
+    },
+    "largeIcon": {
+      "type": "string",
+      "description": "Large icon file (130x130 pixels in PNG format, relative to appinfo.json)",
+      "pattern": "\\.png$",
+      "examples": ["AppName_130x130.png", "large_icon.png"]
+    },
+    "vendor": {
+      "type": "string",
+      "description": "App owner to be used in launcher and deviceinfo dialogs",
+      "examples": ["My Company", "LG Electronics"]
+    },
+    "appDescription": {
+      "type": "string",
+      "description": "Brief information about the app (max 60 characters)",
+      "maxLength": 60,
+      "examples": ["This is an app tagline", "Sample application for webOS TV"]
+    },
+    "resolution": {
+      "type": "string",
+      "description": "Screen resolution for graphics display",
+      "enum": ["1920x1080", "1280x720"],
+      "default": "1920x1080"
+    },
+    "bgColor": {
+      "type": "string",
+      "description": "Background color of the app (webOS TV 1.x and 2.x only)",
+      "pattern": "^(#[0-9A-Fa-f]{6}|[a-zA-Z]+)$",
+      "examples": ["#5e70a2", "#ffffff", "red", "blue"]
+    },
+    "iconColor": {
+      "type": "string",
+      "description": "Background color for app tile",
+      "pattern": "^(#[0-9A-Fa-f]{6}|[a-zA-Z]+)$",
+      "default": "white",
+      "examples": ["white", "#000000", "red"]
+    },
+    "bgImage": {
+      "type": "string",
+      "description": "Background image (1920x1080 PNG, webOS TV 1.x and 2.x only)",
+      "pattern": "\\.png$",
+      "examples": ["AppName_Preview.png", "background.png"]
+    },
+    "closeOnRotation": {
+      "type": "boolean",
+      "description": "Whether to close app on rotation",
+      "default": false
+    },
+    "disableBackHistoryAPI": {
+      "type": "boolean",
+      "description": "Whether to disable back history API",
+      "default": false
+    },
+    "handlesRelaunch": {
+      "type": "boolean",
+      "description": "Whether the app handles webOSRelaunch event",
+      "default": false
+    },
+    "splashBackground": {
+      "type": "string",
+      "description": "Background image displayed while app is loading (1920x1080 PNG)",
+      "pattern": "\\.png$",
+      "examples": ["AppName_Splash.png", "splash.png"]
+    },
+    "splashColor": {
+      "type": "string",
+      "description": "Background color (RGB) of splash image (StanbyME model only)",
+      "pattern": "^(#[0-9A-Fa-f]{6}|[a-zA-Z]+)$",
+      "default": "gray",
+      "examples": ["#111111", "black", "gray"]
+    },
+    "splashFitModeOnPortrait": {
+      "type": "string",
+      "description": "Fit mode for splash image in portrait mode (StanbyME model only)",
+      "enum": ["none", "width"],
+      "default": "none"
+    },
+    "requiredMemory": {
+      "type": "number",
+      "description": "Minimum amount of memory in megabytes required to run the app",
+      "minimum": 0,
+      "examples": [20, 50, 100]
+    },
+    "supportPortraitMode": {
+      "type": "boolean",
+      "description": "Whether the app supports portrait mode (StanbyME model only)",
+      "default": false
+    },
+    "supportTouchMode": {
+      "type": "string",
+      "description": "How to handle touch events (StanbyME model only)",
+      "enum": ["none", "full", "virtual"],
+      "default": "none"
+    },
+    "transparent": {
+      "type": "boolean",
+      "description": "Transparency of app background",
+      "default": false
+    },
+    "useGalleryMode": {
+      "type": "boolean",
+      "description": "Whether to change picture setting to Gallery mode (required when screenSaverProperties.preferredType is 3)",
+      "default": false
+    },
+    "virtualTouch": {
+      "type": "object",
+      "description": "Detail values for touch inputs (applies when supportTouchMode is 'virtual')",
+      "properties": {
+        "verticalThreshold": {
+          "type": "number",
+          "description": "Threshold (10-100 px) for vertical touch and drag events",
+          "minimum": 10,
+          "maximum": 100,
+          "default": 40
+        },
+        "horizontalThreshold": {
+          "type": "number",
+          "description": "Threshold (10-100 px) for horizontal touch and drag events",
+          "minimum": 10,
+          "maximum": 100,
+          "default": 40
+        },
+        "positionEventOnPress": {
+          "type": "boolean",
+          "description": "Whether to send touch press event as mouse position event",
+          "default": false
+        },
+        "shortTouchThreshold": {
+          "type": "number",
+          "description": "Click threshold (10-50 px) to be recognized as short touch",
+          "minimum": 10,
+          "maximum": 50,
+          "default": 10
+        }
+      },
+      "additionalProperties": false
+    },
+    "accessibility": {
+      "type": "object",
+      "description": "Object for supporting accessibility functions",
+      "properties": {
+        "supportsAudioGuidance": {
+          "type": "boolean",
+          "description": "Whether to support audio guidance in the app",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "screenSaverProperties": {
+      "type": "object",
+      "description": "Properties for Type 2 or Type 3 screensaver",
+      "properties": {
+        "preferredType": {
+          "type": "number",
+          "description": "Preferred screensaver type",
+          "enum": [2, 3],
+          "examples": [2, 3]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "screenSaverProperties": {
+            "properties": {
+              "preferredType": {
+                "const": 3
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "useGalleryMode": {
+            "const": true
+          }
+        },
+        "required": ["useGalleryMode"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "supportTouchMode": {
+            "const": "virtual"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "virtualTouch": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ],
+  "examples": [
+    {
+      "id": "com.mycompany.app.appname",
+      "title": "AppName",
+      "main": "index.html",
+      "icon": "AppName_80x80.png",
+      "largeIcon": "AppName_130x130.png",
+      "type": "web",
+      "vendor": "My Company",
+      "version": "1.0.0",
+      "appDescription": "This's an app tagline",
+      "resolution": "1920x1080",
+      "bgColor": "red",
+      "iconColor": "red",
+      "bgImage": "AppName_Preview.png",
+      "closeOnRotation": false,
+      "disableBackHistoryAPI": false,
+      "handlesRelaunch": false,
+      "splashBackground": "AppName_Splash.png",
+      "splashColor": "#111111",
+      "splashFitModeOnPortrait": "width",
+      "requiredMemory": 20,
+      "supportPortraitMode": true,
+      "supportTouchMode": "virtual",
+      "transparent": false,
+      "virtualTouch": {
+        "verticalThreshold": 20,
+        "horizontalThreshold": 50,
+        "positionEventOnPress": true,
+        "shortTouchThreshold": 30
+      },
+      "accessibility": {
+        "supportsAudioGuidance": true
+      },
+      "screenSaverProperties": {
+        "preferredType": 3
+      },
+      "useGalleryMode": true
+    }
+  ]
+}

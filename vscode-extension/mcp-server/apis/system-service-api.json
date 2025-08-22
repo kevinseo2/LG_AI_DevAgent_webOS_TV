@@ -1,0 +1,142 @@
+{
+  "apiInfo": {
+    "serviceName": "System Service",
+    "serviceUri": "luna://com.webos.service.systemservice",
+    "category": "system",
+    "description": "시스템 시간에 대한 정보를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true,
+        "22": true,
+        "23": true,
+        "24": true,
+        "25": true
+      },
+      "simulator": true,
+      "emulator": {
+        "1.2": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "getTime",
+      "description": "현재 시스템 시간을 조회합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "시간 변경을 구독할지 여부입니다.",
+          "defaultValue": false
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "utc",
+            "type": "number",
+            "required": true,
+            "description": "UTC 시간 (밀리초)입니다."
+          },
+          {
+            "name": "localtime",
+            "type": "object",
+            "required": true,
+            "description": "로컬 시간 정보입니다."
+          },
+          {
+            "name": "timezone",
+            "type": "string",
+            "required": true,
+            "description": "현재 시간대입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "시스템 시간 조회",
+          "code": "var request = webOS.service.request('luna://com.webos.service.systemservice', {\n  method: 'getTime',\n  parameters: {\n    subscribe: false\n  },\n  onSuccess: function (inResponse) {\n    console.log('UTC time:', inResponse.utc);\n    console.log('Local time:', inResponse.localtime);\n    console.log('Timezone:', inResponse.timezone);\n  },\n  onFailure: function (inError) {\n    console.log('Get time failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "setTime",
+      "description": "시스템 시간을 설정합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "utc",
+          "required": true,
+          "type": "number",
+          "description": "설정할 UTC 시간 (밀리초)입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "시스템 시간 설정",
+          "code": "var request = webOS.service.request('luna://com.webos.service.systemservice', {\n  method: 'setTime',\n  parameters: {\n    utc: Date.now()\n  },\n  onSuccess: function (inResponse) {\n    console.log('Time set successfully');\n  },\n  onFailure: function (inError) {\n    console.log('Set time failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-system-gettime",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.systemservice', {",
+          "    method: 'getTime',",
+          "    parameters: {",
+          "        subscribe: ${1:false}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "        console.log('UTC:', inResponse.utc);",
+          "        console.log('Local time:', inResponse.localtime);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "시스템 시간 조회"
+      }
+    ]
+  }
+}

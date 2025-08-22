@@ -1,0 +1,154 @@
+{
+  "name": "webos-tv-api-assistant",
+  "displayName": "webOS TV API Assistant",
+  "description": "webOS TV 개발을 위한 Luna Service API 자동완성, 코드 생성, Quick Fix 도구",
+  "version": "1.0.0",
+  "publisher": "webos-tv-developer",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevinseo2/LG_AI_DevAgent_webOS_TV.git"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "keywords": [
+    "webos",
+    "tv",
+    "luna-service",
+    "api",
+    "autocomplete",
+    "lg"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "webos-js",
+        "aliases": ["webOS JavaScript", "webos-js"],
+        "extensions": [".js"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "webos-js",
+        "scopeName": "source.js.webos",
+        "path": "./syntaxes/webos-js.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "webos-api.searchAPI",
+        "title": "Search webOS TV APIs",
+        "category": "webOS TV"
+      },
+      {
+        "command": "webos-api.generateCode",
+        "title": "Generate API Code",
+        "category": "webOS TV"
+      },
+      {
+        "command": "webos-api.validateProject",
+        "title": "Validate webOS TV Project",
+        "category": "webOS TV"
+      },
+      {
+        "command": "webos-api.refreshAPIs",
+        "title": "Refresh API Cache",
+        "category": "webOS TV"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorLangId == javascript || editorLangId == typescript",
+          "command": "webos-api.generateCode",
+          "group": "webos@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "webos-api.searchAPI",
+          "when": "editorLangId == javascript || editorLangId == typescript"
+        },
+        {
+          "command": "webos-api.generateCode",
+          "when": "editorLangId == javascript || editorLangId == typescript"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "webOS TV API Assistant",
+      "properties": {
+        "webos-api.mcpServerPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to webOS TV API MCP Server executable"
+        },
+        "webos-api.enableAutoComplete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable auto-completion for webOS TV APIs"
+        },
+        "webos-api.enableQuickFix": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Quick Fix suggestions"
+        },
+        "webos-api.codeStyle": {
+          "type": "string",
+          "enum": ["callback", "async", "promise"],
+          "default": "callback",
+          "description": "Preferred code generation style"
+        },
+        "webos-api.targetVersion": {
+          "type": "string",
+          "default": "6.x",
+          "description": "Target webOS TV version for compatibility checks"
+        }
+      }
+    },
+    "snippets": [
+      {
+        "language": "javascript",
+        "path": "./snippets/webos-api-snippets.json"
+      },
+      {
+        "language": "typescript",
+        "path": "./snippets/webos-api-snippets.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "^18.x",
+    "@typescript-eslint/eslint-plugin": "^6.4.1",
+    "@typescript-eslint/parser": "^6.4.1",
+    "eslint": "^8.47.0",
+    "typescript": "^5.1.6",
+    "@vscode/test-electron": "^2.3.4",
+    "@vscode/vsce": "^2.19.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "zod": "^3.22.4"
+  }
+}

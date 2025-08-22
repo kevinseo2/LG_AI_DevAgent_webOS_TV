@@ -1,0 +1,14 @@
+{
+  "id": "com.example.webostest",
+  "version": "1.0.0",
+  "vendor": "Example Company",
+  "type": "web",
+  "main": "index.html",
+  "title": "webOS TV Test App",
+  "icon": "icon.png",
+  "requiredPermissions": [
+    "audio",
+    "network",
+    "system"
+  ]
+}

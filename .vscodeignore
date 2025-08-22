@@ -1,0 +1,45 @@
+# Development files
+src/**
+tsconfig.json
+**/*.map
+.vscode/
+.git/
+.gitignore
+*.log
+
+# Node modules optimization
+node_modules/**/test/**
+node_modules/**/tests/**
+node_modules/**/*.md
+node_modules/**/.git*
+node_modules/**/CHANGELOG*
+node_modules/**/README*
+node_modules/**/*.test.js
+node_modules/**/*.spec.js
+
+# Documentation and examples
+docs/
+examples/
+
+# Test files  
+test/
+tests/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Keep only essential files
+!dist/**
+!snippets/**
+!mcp-server/**
+!package.json
+!README.md
+!LICENSE

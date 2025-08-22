@@ -1,0 +1,145 @@
+{
+  "webOSTV_APIs": {
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "description": "webOS TV Luna Service API 전체 목록",
+    "apis": [
+      {
+        "serviceName": "Activity Manager",
+        "fileName": "activity-manager-api.json",
+        "serviceUri": "luna://com.palm.activitymanager",
+        "category": "system",
+        "description": "시스템의 다양한 부분을 모니터링하고, 해당 이벤트가 발생할 때 서비스를 시작합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "Application Manager",
+        "fileName": "application-manager-api.json",
+        "serviceUri": "luna://com.webos.applicationManager",
+        "category": "system",
+        "description": "지정된 애플리케이션을 명시적으로 실행하거나, 요청된 명령 및 리소스 유형에 따라 상주 애플리케이션을 암시적으로 실행하는 메서드를 제공합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "Audio",
+        "fileName": "audio-api.json",
+        "serviceUri": "luna://com.webos.service.audio",
+        "category": "media",
+        "description": "볼륨 제어를 위한 메서드를 제공합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "BLE GATT",
+        "fileName": "ble-gatt-api.json",
+        "serviceUri": "luna://com.webos.service.ble",
+        "category": "network",
+        "description": "BLE GATT(Bluetooth Low Energy Generic Attribute Profile) 기능을 위한 메서드를 제공합니다.",
+        "status": "active",
+        "minimumVersion": "webOS TV 24"
+      },
+      {
+        "serviceName": "Camera",
+        "fileName": "camera-api.json",
+        "serviceUri": "luna://com.webos.service.camera",
+        "category": "device",
+        "description": "카메라와 마이크의 정보를 반환하는 메서드를 제공합니다.",
+        "status": "deprecated",
+        "deprecatedSince": "webOS TV 4.x"
+      },
+      {
+        "serviceName": "Connection Manager",
+        "fileName": "connection-manager-api.json",
+        "serviceUri": "luna://com.webos.service.connectionmanager",
+        "category": "network",
+        "description": "사용 가능한 인터넷 연결의 상태를 제공합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "Database",
+        "fileName": "database-api.json",
+        "serviceUri": "luna://com.webos.service.db",
+        "category": "system",
+        "description": "앱이 지속적인 데이터를 저장할 수 있도록 합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "Device Unique ID",
+        "fileName": "device-unique-id-api.json",
+        "serviceUri": "luna://com.webos.service.sm",
+        "category": "device",
+        "description": "디바이스 식별을 위한 메서드를 제공합니다.",
+        "status": "active",
+        "minimumVersion": "webOS TV 3.x"
+      },
+      {
+        "serviceName": "DRM",
+        "fileName": "drm-api.json",
+        "serviceUri": "luna://com.webos.service.drm",
+        "category": "media",
+        "description": "DRM 클라이언트 관리, DRM 메시지 전송, DRM 권한 오류 정보 구독을 위한 메서드를 제공합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "Keymanager3",
+        "fileName": "keymanager3-api.json",
+        "serviceUri": "luna://com.webos.service.keymanager",
+        "category": "system",
+        "description": "키의 생성 및 삭제, 암호화 및 복호화, 서명의 생성 및 검증 등을 위한 메서드를 제공합니다.",
+        "status": "active",
+        "minimumVersion": "webOS TV 24"
+      },
+      {
+        "serviceName": "Magic Remote",
+        "fileName": "magic-remote-api.json",
+        "serviceUri": "luna://com.webos.service.magicremote",
+        "category": "device",
+        "description": "센서 및 페어링과 같은 매직 리모컨 관련 기능을 제공합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "Media Database",
+        "fileName": "media-database-api.json",
+        "serviceUri": "luna://com.webos.service.mediadb",
+        "category": "media",
+        "description": "앱이 대용량 미디어 관련 데이터셋을 지속적으로 저장할 수 있도록 합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "Settings Service",
+        "fileName": "settings-service-api.json",
+        "serviceUri": "luna://com.webos.service.settings",
+        "category": "system",
+        "description": "시스템 설정 값을 조회하기 위한 메서드를 제공합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "System Service",
+        "fileName": "system-service-api.json",
+        "serviceUri": "luna://com.webos.service.systemservice",
+        "category": "system",
+        "description": "시스템 시간에 대한 정보를 제공합니다.",
+        "status": "active"
+      },
+      {
+        "serviceName": "TV Device Information",
+        "fileName": "tv-device-information-api.json",
+        "serviceUri": "luna://com.webos.service.tv.systemproperty",
+        "category": "device",
+        "description": "TV 시스템 정보를 조회하기 위한 메서드를 제공합니다.",
+        "status": "active"
+      }
+    ],
+    "categories": {
+      "system": ["Activity Manager", "Application Manager", "Database", "Keymanager3", "Settings Service", "System Service"],
+      "media": ["Audio", "DRM", "Media Database"],
+      "device": ["Camera", "Device Unique ID", "Magic Remote", "TV Device Information"],
+      "network": ["BLE GATT", "Connection Manager"]
+    },
+    "compatibility": {
+      "note": "각 API 파일의 compatibility 섹션에서 상세한 버전 호환성 정보를 확인하세요.",
+      "webOSTV_versions": ["1.x", "2.x", "3.x", "4.x", "5.x", "6.x", "22", "23", "24", "25"],
+      "emulator_versions": ["1.2", "2.x", "3.x", "4.x", "5.x", "6.x"],
+      "simulator": "대부분의 API가 시뮬레이터에서 지원됩니다"
+    }
+  }
+}

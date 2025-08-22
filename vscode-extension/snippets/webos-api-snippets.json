@@ -1,0 +1,215 @@
+{
+  "webOS Service Request": {
+    "prefix": "webos-request",
+    "body": [
+      "webOS.service.request('${1:luna://service.uri}', {",
+      "    method: '${2:methodName}',",
+      "    parameters: {",
+      "        ${3:// parameters}",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        ${4:// Success handling}",
+      "        console.log('Success:', inResponse);",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        ${5:// Error handling}",
+      "        console.log('Failed:', inError.errorText);",
+      "    }",
+      "});"
+    ],
+    "description": "webOS TV Luna Service API 호출"
+  },
+  "webOS Service Request with Subscription": {
+    "prefix": "webos-request-sub",
+    "body": [
+      "webOS.service.request('${1:luna://service.uri}', {",
+      "    method: '${2:methodName}',",
+      "    parameters: {",
+      "        subscribe: true,",
+      "        ${3:// other parameters}",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        ${4:// Success handling}",
+      "        console.log('Success:', inResponse);",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        ${5:// Error handling}",
+      "        console.log('Failed:', inError.errorText);",
+      "    }",
+      "});"
+    ],
+    "description": "구독이 포함된 webOS TV Luna Service API 호출"
+  },
+  "Audio Get Volume": {
+    "prefix": "webos-audio-getvolume",
+    "body": [
+      "webOS.service.request('luna://com.webos.service.audio', {",
+      "    method: 'getVolume',",
+      "    parameters: {",
+      "        subscribe: ${1:false}",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        console.log('Volume:', inResponse.volume);",
+      "        console.log('Muted:', inResponse.muted);",
+      "        ${2:// Handle volume info}",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        console.log('Get volume failed:', inError.errorText);",
+      "        ${3:// Handle error}",
+      "    }",
+      "});"
+    ],
+    "description": "Audio 볼륨 조회"
+  },
+  "Audio Set Volume": {
+    "prefix": "webos-audio-setvolume",
+    "body": [
+      "webOS.service.request('luna://com.webos.service.audio', {",
+      "    method: 'setVolume',",
+      "    parameters: {",
+      "        volume: ${1:50}",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        console.log('Volume set successfully');",
+      "        ${2:// Handle success}",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        console.log('Set volume failed:', inError.errorText);",
+      "        ${3:// Handle error}",
+      "    }",
+      "});"
+    ],
+    "description": "Audio 볼륨 설정"
+  },
+  "Activity Manager Adopt": {
+    "prefix": "webos-activity-adopt",
+    "body": [
+      "webOS.service.request('luna://com.palm.activitymanager', {",
+      "    method: 'adopt',",
+      "    parameters: {",
+      "        activityId: ${1:activityId},",
+      "        wait: ${2:true},",
+      "        subscribe: ${3:true}",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        console.log('Adopt success:', inResponse.adopted);",
+      "        ${4:// Handle adoption}",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        console.log('Adopt failed:', inError.errorText);",
+      "        ${5:// Handle error}",
+      "    }",
+      "});"
+    ],
+    "description": "Activity Manager adopt 메서드 호출"
+  },
+  "Settings Get System Settings": {
+    "prefix": "webos-settings-get",
+    "body": [
+      "webOS.service.request('luna://com.webos.service.settings', {",
+      "    method: 'getSystemSettings',",
+      "    parameters: {",
+      "        keys: [${1:'localeInfo', 'country'}],",
+      "        subscribe: ${2:false}",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        console.log('Settings:', inResponse.settings);",
+      "        ${3:// Handle settings}",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        console.log('Get settings failed:', inError.errorText);",
+      "        ${4:// Handle error}",
+      "    }",
+      "});"
+    ],
+    "description": "시스템 설정 조회"
+  },
+  "Connection Manager Status": {
+    "prefix": "webos-connection-status",
+    "body": [
+      "webOS.service.request('luna://com.webos.service.connectionmanager', {",
+      "    method: 'getStatus',",
+      "    parameters: {",
+      "        subscribe: ${1:false}",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        console.log('Internet available:', inResponse.isInternetConnectionAvailable);",
+      "        console.log('WiFi connected:', inResponse.connectedViaWifi);",
+      "        ${2:// Handle connection status}",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        console.log('Get status failed:', inError.errorText);",
+      "        ${3:// Handle error}",
+      "    }",
+      "});"
+    ],
+    "description": "네트워크 연결 상태 조회"
+  },
+  "Database Put": {
+    "prefix": "webos-db-put",
+    "body": [
+      "webOS.service.request('luna://com.webos.service.db', {",
+      "    method: 'put',",
+      "    parameters: {",
+      "        objects: [{",
+      "            _kind: '${1:com.mycompany.myapp:1}',",
+      "            ${2:// object properties}",
+      "        }]",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        console.log('Data saved:', inResponse.results);",
+      "        ${3:// Handle success}",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        console.log('Save failed:', inError.errorText);",
+      "        ${4:// Handle error}",
+      "    }",
+      "});"
+    ],
+    "description": "데이터베이스에 데이터 저장"
+  },
+  "Database Find": {
+    "prefix": "webos-db-find",
+    "body": [
+      "webOS.service.request('luna://com.webos.service.db', {",
+      "    method: 'find',",
+      "    parameters: {",
+      "        query: {",
+      "            from: '${1:com.mycompany.myapp:1}',",
+      "            where: [{ prop: '${2:property}', op: '${3:=}', val: '${4:value}' }]",
+      "        }",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        console.log('Found data:', inResponse.results);",
+      "        ${5:// Handle results}",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        console.log('Find failed:', inError.errorText);",
+      "        ${6:// Handle error}",
+      "    }",
+      "});"
+    ],
+    "description": "데이터베이스에서 데이터 검색"
+  },
+  "TV Device Info": {
+    "prefix": "webos-tv-info",
+    "body": [
+      "webOS.service.request('luna://com.webos.service.tv.systemproperty', {",
+      "    method: 'getSystemInfo',",
+      "    parameters: {",
+      "        keys: [${1:'modelName', 'firmwareVersion', 'UHD'}]",
+      "    },",
+      "    onSuccess: function (inResponse) {",
+      "        console.log('Model:', inResponse.modelName);",
+      "        console.log('Firmware:', inResponse.firmwareVersion);",
+      "        ${2:// Handle device info}",
+      "    },",
+      "    onFailure: function (inError) {",
+      "        console.log('Get device info failed:', inError.errorText);",
+      "        ${3:// Handle error}",
+      "    }",
+      "});"
+    ],
+    "description": "TV 디바이스 정보 조회"
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "apiInfo": {
+    "serviceName": "Keymanager3",
+    "serviceUri": "luna://com.webos.service.keymanager",
+    "category": "system",
+    "description": "키의 생성 및 삭제, 암호화 및 복호화, 서명의 생성 및 검증 등을 위한 메서드를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": false,
+        "2.x": false,
+        "3.x": false,
+        "4.x": false,
+        "5.x": false,
+        "6.x": false,
+        "22": false,
+        "23": false,
+        "24": true,
+        "25": true
+      },
+      "simulator": false,
+      "emulator": {
+        "1.2": false,
+        "2.x": false,
+        "3.x": false,
+        "4.x": false,
+        "5.x": false,
+        "6.x": false
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "generateKey",
+      "description": "암호화 키를 생성합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "keyType",
+          "required": true,
+          "type": "string",
+          "description": "생성할 키의 타입입니다.",
+          "enum": ["AES", "RSA"]
+        },
+        {
+          "name": "keySize",
+          "required": true,
+          "type": "number",
+          "description": "키의 크기입니다."
+        },
+        {
+          "name": "keyName",
+          "required": true,
+          "type": "string",
+          "description": "키의 이름입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "keyId",
+            "type": "string",
+            "required": false,
+            "description": "생성된 키의 ID입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "AES 키 생성",
+          "code": "var request = webOS.service.request('luna://com.webos.service.keymanager', {\n  method: 'generateKey',\n  parameters: {\n    keyType: 'AES',\n    keySize: 256,\n    keyName: 'myAESKey'\n  },\n  onSuccess: function (inResponse) {\n    console.log('Key generated:', inResponse.keyId);\n  },\n  onFailure: function (inError) {\n    console.log('Key generation failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-keymanager-generate",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.keymanager', {",
+          "    method: 'generateKey',",
+          "    parameters: {",
+          "        keyType: '${1|AES,RSA|}',",
+          "        keySize: ${2:256},",
+          "        keyName: '${3:keyName}'",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${4:// Success handling}",
+          "        console.log('Key ID:', inResponse.keyId);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${5:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "암호화 키 생성"
+      }
+    ]
+  }
+}

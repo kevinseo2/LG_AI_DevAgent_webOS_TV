@@ -1,0 +1,153 @@
+{
+  "apiInfo": {
+    "serviceName": "Audio",
+    "serviceUri": "luna://com.webos.service.audio",
+    "category": "media",
+    "description": "볼륨 제어를 위한 메서드를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true,
+        "22": true,
+        "23": true,
+        "24": true,
+        "25": true
+      },
+      "simulator": false,
+      "emulator": {
+        "1.2": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "getVolume",
+      "description": "현재 볼륨 수준을 조회합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "볼륨 변경 알림을 구독할지 여부입니다.",
+          "defaultValue": false
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "volume",
+            "type": "number",
+            "required": true,
+            "description": "현재 볼륨 수준 (0-100)입니다."
+          },
+          {
+            "name": "muted",
+            "type": "boolean",
+            "required": true,
+            "description": "음소거 상태를 나타냅니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "볼륨 조회",
+          "code": "var request = webOS.service.request('luna://com.webos.service.audio', {\n  method: 'getVolume',\n  parameters: {\n    subscribe: true\n  },\n  onSuccess: function (inResponse) {\n    console.log('Current volume:', inResponse.volume);\n    console.log('Muted:', inResponse.muted);\n  },\n  onFailure: function (inError) {\n    console.log('Get volume failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "setVolume",
+      "description": "볼륨 수준을 설정합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "volume",
+          "required": true,
+          "type": "number",
+          "description": "설정할 볼륨 수준 (0-100)입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "볼륨 설정",
+          "code": "var request = webOS.service.request('luna://com.webos.service.audio', {\n  method: 'setVolume',\n  parameters: {\n    volume: 50\n  },\n  onSuccess: function (inResponse) {\n    console.log('Volume set successfully');\n  },\n  onFailure: function (inError) {\n    console.log('Set volume failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-audio-getvolume",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.audio', {",
+          "    method: 'getVolume',",
+          "    parameters: {",
+          "        subscribe: ${1:false}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "        console.log('Volume:', inResponse.volume);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "Audio 볼륨 조회"
+      },
+      {
+        "prefix": "webos-audio-setvolume",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.audio', {",
+          "    method: 'setVolume',",
+          "    parameters: {",
+          "        volume: ${1:50}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "Audio 볼륨 설정"
+      }
+    ]
+  }
+}

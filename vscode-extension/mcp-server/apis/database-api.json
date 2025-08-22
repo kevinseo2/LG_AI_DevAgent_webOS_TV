@@ -1,0 +1,166 @@
+{
+  "apiInfo": {
+    "serviceName": "Database",
+    "serviceUri": "luna://com.webos.service.db",
+    "category": "system",
+    "description": "앱이 지속적인 데이터를 저장할 수 있도록 합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true,
+        "22": true,
+        "23": true,
+        "24": true,
+        "25": true
+      },
+      "simulator": true,
+      "emulator": {
+        "1.2": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "put",
+      "description": "데이터베이스에 객체를 저장합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "objects",
+          "required": true,
+          "type": "array",
+          "description": "저장할 객체들의 배열입니다."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "results",
+            "type": "array",
+            "required": false,
+            "description": "저장된 객체들의 결과입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "데이터 저장",
+          "code": "var request = webOS.service.request('luna://com.webos.service.db', {\n  method: 'put',\n  parameters: {\n    objects: [{\n      _kind: 'com.mycompany.myapp:1',\n      name: 'John',\n      age: 30\n    }]\n  },\n  onSuccess: function (inResponse) {\n    console.log('Data saved:', inResponse.results);\n  },\n  onFailure: function (inError) {\n    console.log('Save failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "find",
+      "description": "데이터베이스에서 객체를 검색합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "query",
+          "required": true,
+          "type": "object",
+          "description": "검색 쿼리입니다."
+        },
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "결과 변경을 구독할지 여부입니다.",
+          "defaultValue": false
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "results",
+            "type": "array",
+            "required": false,
+            "description": "검색 결과입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "데이터 검색",
+          "code": "var request = webOS.service.request('luna://com.webos.service.db', {\n  method: 'find',\n  parameters: {\n    query: {\n      from: 'com.mycompany.myapp:1',\n      where: [{ prop: 'name', op: '=', val: 'John' }]\n    }\n  },\n  onSuccess: function (inResponse) {\n    console.log('Found data:', inResponse.results);\n  },\n  onFailure: function (inError) {\n    console.log('Find failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-db-put",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.db', {",
+          "    method: 'put',",
+          "    parameters: {",
+          "        objects: [{",
+          "            _kind: '${1:com.mycompany.myapp:1}',",
+          "            ${2:// object properties}",
+          "        }]",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${3:// Success handling}",
+          "        console.log('Data saved:', inResponse.results);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${4:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "데이터베이스에 데이터 저장"
+      },
+      {
+        "prefix": "webos-db-find",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.db', {",
+          "    method: 'find',",
+          "    parameters: {",
+          "        query: {",
+          "            from: '${1:com.mycompany.myapp:1}',",
+          "            where: [{ prop: '${2:property}', op: '${3:=}', val: '${4:value}' }]",
+          "        }",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${5:// Success handling}",
+          "        console.log('Found data:', inResponse.results);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${6:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "데이터베이스에서 데이터 검색"
+      }
+    ]
+  }
+}

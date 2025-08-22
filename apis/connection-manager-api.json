@@ -1,0 +1,109 @@
+{
+  "apiInfo": {
+    "serviceName": "Connection Manager",
+    "serviceUri": "luna://com.webos.service.connectionmanager",
+    "category": "network",
+    "description": "사용 가능한 인터넷 연결의 상태를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2024-01-15",
+    "compatibility": {
+      "webOSTV": {
+        "1.x": true,
+        "2.x": true,
+        "3.x": true,
+        "4.x": true,
+        "5.x": true,
+        "6.x": true,
+        "22": true,
+        "23": true,
+        "24": true,
+        "25": true
+      },
+      "simulator": true,
+      "emulator": {
+        "1.2": "partially",
+        "2.x": "partially",
+        "3.x": "partially",
+        "4.x": "partially",
+        "5.x": "partially",
+        "6.x": "partially"
+      }
+    }
+  },
+  "methods": [
+    {
+      "name": "getStatus",
+      "description": "현재 네트워크 연결 상태를 조회합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "연결 상태 변경을 구독할지 여부입니다.",
+          "defaultValue": false
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패를 나타냅니다."
+          },
+          {
+            "name": "isInternetConnectionAvailable",
+            "type": "boolean",
+            "required": true,
+            "description": "인터넷 연결 가능 여부입니다."
+          },
+          {
+            "name": "connectedViaWifi",
+            "type": "boolean",
+            "required": false,
+            "description": "Wi-Fi로 연결되어 있는지 여부입니다."
+          },
+          {
+            "name": "connectedViaEthernet",
+            "type": "boolean",
+            "required": false,
+            "description": "이더넷으로 연결되어 있는지 여부입니다."
+          }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "연결 상태 조회",
+          "code": "var request = webOS.service.request('luna://com.webos.service.connectionmanager', {\n  method: 'getStatus',\n  parameters: {\n    subscribe: true\n  },\n  onSuccess: function (inResponse) {\n    console.log('Internet available:', inResponse.isInternetConnectionAvailable);\n    console.log('WiFi connected:', inResponse.connectedViaWifi);\n    console.log('Ethernet connected:', inResponse.connectedViaEthernet);\n  },\n  onFailure: function (inError) {\n    console.log('Get status failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-connection-status",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.connectionmanager', {",
+          "    method: 'getStatus',",
+          "    parameters: {",
+          "        subscribe: ${1:false}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${2:// Success handling}",
+          "        console.log('Internet:', inResponse.isInternetConnectionAvailable);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "네트워크 연결 상태 조회"
+      }
+    ]
+  }
+}
