@@ -63,7 +63,7 @@ export class APIManager {
                 if (!fullAPI)
                     return false;
                 const compatibility = fullAPI.apiInfo.compatibility.webOSTV;
-                return compatibility[options.version] === true;
+                return options.version && compatibility[options.version] === true;
             });
         }
         return apiList.map((api) => ({

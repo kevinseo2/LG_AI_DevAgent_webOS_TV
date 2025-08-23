@@ -10,62 +10,105 @@ let apiProvider: WebOSAPIProvider;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log('webOS TV API Assistant is now active!');
-
-    // Initialize MCP Client
-    mcpClient = new MCPClient();
-    await mcpClient.initialize();
-
-    // Initialize API Provider
-    apiProvider = new WebOSAPIProvider(mcpClient);
-    await apiProvider.initialize(context);
-
-    // Register providers
-    registerProviders(context);
     
-    // Register commands
-    registerCommands(context);
+    try {
+        // Initialize MCP Client
+        console.log('Initializing MCP Client...');
+        mcpClient = new MCPClient();
+        await mcpClient.initialize();
+        console.log('MCP Client initialized successfully');
 
-    // Show activation message
-    vscode.window.showInformationMessage('webOS TV API Assistant activated! 🚀');
+        // Initialize API Provider
+        console.log('Initializing API Provider...');
+        apiProvider = new WebOSAPIProvider(mcpClient);
+        await apiProvider.initialize(context);
+        console.log('API Provider initialized successfully');
+
+        // Register providers with error handling
+        console.log('Registering providers...');
+        registerProviders(context);
+        console.log('Providers registered successfully');
+        
+        // Register commands
+        console.log('Registering commands...');
+        registerCommands(context);
+        console.log('Commands registered successfully');
+
+        // Show activation message
+        vscode.window.showInformationMessage('webOS TV API Assistant activated! 🚀');
+        console.log('webOS TV API Assistant activation completed');
+        
+    } catch (error) {
+        console.error('Failed to activate webOS TV API Assistant:', error);
+        vscode.window.showErrorMessage(`webOS TV API Assistant activation failed: ${error instanceof Error ? error.message : String(error)}`);
+        
+        // Still try to register basic functionality even if full initialization fails
+        try {
+            console.log('Attempting fallback registration...');
+            registerProviders(context);
+            registerCommands(context);
+            vscode.window.showWarningMessage('webOS TV API Assistant activated with limited functionality');
+        } catch (fallbackError) {
+            console.error('Fallback registration also failed:', fallbackError);
+        }
+    }
 }
 
 function registerProviders(context: vscode.ExtensionContext) {
-    const jsSelector = { language: 'javascript', scheme: 'file' };
-    const tsSelector = { language: 'typescript', scheme: 'file' };
-    const selectors = [jsSelector, tsSelector];
+    try {
+        const jsSelector = { language: 'javascript', scheme: 'file' };
+        const tsSelector = { language: 'typescript', scheme: 'file' };
+        const selectors = [jsSelector, tsSelector];
 
-    // Completion Provider
-    const completionProvider = new WebOSCompletionProvider(apiProvider);
-    for (const selector of selectors) {
-        context.subscriptions.push(
-            vscode.languages.registerCompletionItemProvider(
-                selector,
-                completionProvider,
-                '.', '(', '\''
-            )
-        );
-    }
+        // Ensure apiProvider exists before registering providers
+        if (!apiProvider) {
+            console.warn('⚠️ API Provider not available, creating minimal fallback...');
+            // Create a minimal fallback API provider
+            if (mcpClient) {
+                apiProvider = new WebOSAPIProvider(mcpClient);
+            } else {
+                console.error('❌ MCP Client also not available, providers may have limited functionality');
+                return;
+            }
+        }
 
-    // Code Action Provider (Quick Fix)
-    const codeActionProvider = new WebOSCodeActionProvider(apiProvider);
-    for (const selector of selectors) {
-        context.subscriptions.push(
-            vscode.languages.registerCodeActionsProvider(
-                selector,
-                codeActionProvider
-            )
-        );
-    }
+        // Completion Provider with high priority and comprehensive trigger characters
+        const completionProvider = new WebOSCompletionProvider(apiProvider);
+        for (const selector of selectors) {
+            context.subscriptions.push(
+                vscode.languages.registerCompletionItemProvider(
+                    selector,
+                    completionProvider,
+                    // Add all possible trigger characters
+                    '.', '(', '\'', '"', '/', ':', 'l', 'w', 'O', 'S', 'u', 'n', 'a', 'e', 'b'
+                )
+            );
+        }
 
-    // Hover Provider
-    const hoverProvider = new WebOSHoverProvider(apiProvider);
-    for (const selector of selectors) {
-        context.subscriptions.push(
-            vscode.languages.registerHoverProvider(
-                selector,
-                hoverProvider
-            )
-        );
+        // Code Action Provider (Quick Fix)
+        const codeActionProvider = new WebOSCodeActionProvider(apiProvider);
+        for (const selector of selectors) {
+            context.subscriptions.push(
+                vscode.languages.registerCodeActionsProvider(
+                    selector,
+                    codeActionProvider
+                )
+            );
+        }
+
+        // Hover Provider
+        const hoverProvider = new WebOSHoverProvider(apiProvider);
+        for (const selector of selectors) {
+            context.subscriptions.push(
+                vscode.languages.registerHoverProvider(
+                    selector,
+                    hoverProvider
+                )
+            );
+        }
+    } catch (error) {
+        console.error('❌ Failed to register providers:', error);
+        throw error;
     }
 }
 

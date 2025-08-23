@@ -2,7 +2,7 @@
   "webOS Service Request": {
     "prefix": "webos-request",
     "body": [
-      "webOS.service.request('${1:luna://service.uri}', {",
+      "webOS.service.request('${1:luna://service.name}', {",
       "    method: '${2:methodName}',",
       "    parameters: {",
       "        ${3:// parameters}",
@@ -22,7 +22,7 @@
   "webOS Service Request with Subscription": {
     "prefix": "webos-request-sub",
     "body": [
-      "webOS.service.request('${1:luna://service.uri}', {",
+      "webOS.service.request('${1:luna://service.name}', {",
       "    method: '${2:methodName}',",
       "    parameters: {",
       "        subscribe: true,",

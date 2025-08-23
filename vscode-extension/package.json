@@ -30,21 +30,6 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "languages": [
-      {
-        "id": "webos-js",
-        "aliases": ["webOS JavaScript", "webos-js"],
-        "extensions": [".js"],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "webos-js",
-        "scopeName": "source.js.webos",
-        "path": "./syntaxes/webos-js.tmLanguage.json"
-      }
-    ],
     "commands": [
       {
         "command": "webos-api.searchAPI",

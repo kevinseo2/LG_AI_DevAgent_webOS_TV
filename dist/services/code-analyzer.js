@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { glob } from 'glob';
+import pkg from 'glob';
+const { glob } = pkg;
 export class CodeAnalyzer {
     apis = new Map();
     constructor(apis) {

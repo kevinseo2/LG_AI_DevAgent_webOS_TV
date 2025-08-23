@@ -1,6 +1,7 @@
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export interface MCPRequest {
     jsonrpc: string;
@@ -31,24 +32,65 @@ export class MCPClient {
                 // Try to find the embedded server in the extension
                 const extensionPath = vscode.extensions.getExtension('webos-tv-developer.webos-tv-api-assistant')?.extensionPath;
                 if (extensionPath) {
-                    serverPath = path.join(extensionPath, 'mcp-server', 'dist', 'index.js');
-                } else {
-                    // Fallback: try to find the server in the workspace
+                    const possibleServerPaths = [
+                        path.join(extensionPath, 'mcp-server', 'dist', 'index.js'),
+                        path.join(extensionPath, 'mcp-server', 'index.js'),
+                        path.join(extensionPath, 'dist', 'index.js')
+                    ];
+                    
+                    for (const possiblePath of possibleServerPaths) {
+                        if (fs.existsSync(possiblePath)) {
+                            serverPath = possiblePath;
+                            break;
+                        }
+                    }
+                }
+                
+                // Try to find MCP server in the workspace root (more reliable)
+                if (!serverPath) {
                     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
                     if (workspaceFolder) {
-                        serverPath = path.join(workspaceFolder.uri.fsPath, 'dist', 'index.js');
+                        // Try multiple possible locations, prioritizing workspace root
+                        const possiblePaths = [
+                            path.join(workspaceFolder.uri.fsPath, 'dist', 'index.js'), // Workspace root dist
+                            path.join(workspaceFolder.uri.fsPath, 'vscode-extension', 'mcp-server', 'dist', 'index.js'),
+                            path.join(workspaceFolder.uri.fsPath, 'mcp-server', 'dist', 'index.js'),
+                            path.join(workspaceFolder.uri.fsPath, 'src', 'index.ts') // Development mode
+                        ];
+                        
+                        console.log('🔍 Searching for MCP server in workspace:', workspaceFolder.uri.fsPath);
+                        for (const testPath of possiblePaths) {
+                            console.log(`🔎 Checking: ${testPath}`);
+                        }
+                        
+                        for (const possiblePath of possiblePaths) {
+                            try {
+                                // Check if file exists
+                                if (fs.existsSync(possiblePath)) {
+                                    console.log(`✅ Found MCP server at: ${possiblePath}`);
+                                    serverPath = possiblePath;
+                                    break;
+                                }
+                            } catch {
+                                // Continue to next path
+                            }
+                        }
                     }
                 }
             }
 
             if (!serverPath) {
-                throw new Error('MCP Server path not configured');
+                console.warn('MCP Server path not found, extension will work with limited functionality');
+                // Don't throw error, just warn - extension should still work with fallback completions
+                return;
             }
 
+            console.log(`Using MCP Server at: ${serverPath}`);
             await this.connectToServer(serverPath);
         } catch (error) {
             console.error('Failed to initialize MCP client:', error);
-            vscode.window.showErrorMessage(`Failed to connect to webOS TV API server: ${error}`);
+            // Show warning instead of error - extension can still work with fallbacks
+            vscode.window.showWarningMessage(`webOS TV API server unavailable - using fallback completions. Error: ${error}`);
         }
     }
 
@@ -60,15 +102,30 @@ export class MCPClient {
                 });
 
                 this.serverProcess.stdout.on('data', (data) => {
-                    this.handleServerOutput(data.toString());
+                    const output = data.toString();
+                    console.log('Server stdout:', output);
+                    
+                    // Check for success message in stdout
+                    if (output.includes('webOS TV API MCP Server started successfully')) {
+                        console.log('✅ MCP Server started successfully!');
+                        this.isConnected = true;
+                        resolve();
+                    }
+                    
+                    this.handleServerOutput(output);
                 });
 
                 this.serverProcess.stderr.on('data', (data) => {
                     const output = data.toString();
+                    console.log('Server stderr:', output);
+                    
+                    // Also check stderr for success message (fallback)
                     if (output.includes('webOS TV API MCP Server started successfully')) {
+                        console.log('✅ MCP Server started successfully (from stderr)!');
                         this.isConnected = true;
                         resolve();
-                    } else {
+                    } else if (!output.includes('Warning') && !output.includes('MODULE_TYPELESS_PACKAGE_JSON')) {
+                        // Only log actual errors, not warnings
                         console.error('Server error:', output);
                     }
                 });
@@ -84,12 +141,14 @@ export class MCPClient {
                     reject(error);
                 });
 
-                // Wait for server startup message
+                // Wait for server startup message with longer timeout
                 setTimeout(() => {
                     if (!this.isConnected) {
+                        console.error('❌ MCP Server startup timeout after 10 seconds');
+                        this.serverProcess?.kill();
                         reject(new Error('Server startup timeout'));
                     }
-                }, 5000);
+                }, 10000); // Increased to 10 seconds
             } catch (error) {
                 reject(error);
             }

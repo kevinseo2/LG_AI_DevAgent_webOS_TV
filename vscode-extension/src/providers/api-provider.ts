@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 import { MCPClient } from '../services/mcp-client';
 
 export interface WebOSAPIInfo {
@@ -22,13 +24,15 @@ export class WebOSAPIProvider {
     private apis: WebOSAPIInfo[] = [];
     private methods: WebOSMethod[] = [];
     private statusBarItem: vscode.StatusBarItem;
+    private isInitialized = false;
+    private fallbackAPIs: Map<string, any> = new Map();
 
     constructor(private mcpClient: MCPClient) {
         this.statusBarItem = vscode.window.createStatusBarItem(
             vscode.StatusBarAlignment.Right,
             100
         );
-        this.statusBarItem.text = '$(rocket) webOS TV';
+        this.statusBarItem.text = '$(rocket) webOS TV (Loading...)';
         this.statusBarItem.tooltip = 'webOS TV API Assistant';
         this.statusBarItem.command = 'webos-api.searchAPI';
     }
@@ -42,24 +46,70 @@ export class WebOSAPIProvider {
             context.subscriptions.push(this.statusBarItem);
 
             // Update status
-            this.statusBarItem.text = `$(rocket) webOS TV (${this.apis.length} APIs)`;
+            const apiCount = this.apis.length;
+            if (apiCount > 0) {
+                this.statusBarItem.text = `$(rocket) webOS TV (${apiCount} APIs)`;
+                this.statusBarItem.tooltip = `webOS TV API Assistant - ${apiCount} APIs loaded`;
+            } else {
+                this.statusBarItem.text = '$(rocket) webOS TV (Offline)';
+                this.statusBarItem.tooltip = 'webOS TV API Assistant - Using offline completions\nMCP server unavailable - basic functionality available';
+            }
+            
+            this.isInitialized = true;
+            console.log(`API Provider initialized with ${apiCount} APIs`);
         } catch (error) {
             console.error('Failed to initialize API provider:', error);
-            vscode.window.showErrorMessage('Failed to load webOS TV APIs');
+            this.statusBarItem.text = '$(rocket) webOS TV (Limited)';
+            this.statusBarItem.tooltip = `webOS TV API Assistant - Limited functionality: ${error}`;
+            
+            // Still mark as initialized so fallback completions work
+            this.isInitialized = true;
+            
+            // Show info message instead of error since extension still works
+            vscode.window.showInformationMessage('webOS TV API Assistant started with limited functionality - using fallback completions');
         }
     }
 
     private async loadAPIs(): Promise<void> {
         try {
+            console.log('Calling MCP tool: webos_list_apis');
             // Get all APIs
             const response = await this.mcpClient.callTool('webos_list_apis');
+            console.log('MCP response received:', response);
+            
             this.apis = this.parseAPIListResponse(response);
+            console.log(`Parsed ${this.apis.length} APIs:`, this.apis);
+            
+            // Update status bar immediately when APIs are loaded from MCP
+            if (this.apis.length > 0) {
+                this.statusBarItem.text = `$(rocket) webOS TV (${this.apis.length} APIs)`;
+                this.statusBarItem.tooltip = `webOS TV API Assistant - ${this.apis.length} APIs loaded from MCP server`;
+                console.log(`✅ Successfully loaded ${this.apis.length} APIs from MCP server`);
+            }
+
+            // If no APIs were loaded from MCP, try loading from local files
+            if (this.apis.length === 0) {
+                console.log('No APIs from MCP, trying local files...');
+                await this.loadAPIsFromLocalFiles();
+            }
 
             // Cache frequently used methods for faster completion
             await this.cacheCommonMethods();
+            console.log('Common methods cached');
+
+            // Load fallback APIs from local files
+            await this.loadFallbackAPIs();
+            console.log('Fallback APIs loaded');
         } catch (error) {
-            console.error('Failed to load APIs:', error);
-            throw error;
+            console.error('Failed to load APIs via MCP, trying local files:', error);
+            // Fallback to local files
+            try {
+                await this.loadAPIsFromLocalFiles();
+                console.log('Successfully loaded APIs from local files');
+            } catch (localError) {
+                console.error('Failed to load APIs from local files:', localError);
+                throw error;
+            }
         }
     }
 
@@ -103,6 +153,39 @@ export class WebOSAPIProvider {
             return apis;
         }
         return [];
+    }
+
+    private async loadAPIsFromLocalFiles(): Promise<void> {
+        try {
+            const extensionPath = vscode.extensions.getExtension('webos-tv-developer.webos-tv-api-assistant')?.extensionPath;
+            if (!extensionPath) {
+                throw new Error('Extension path not found');
+            }
+
+            const apiIndexPath = path.join(extensionPath, 'mcp-server', 'apis', 'api-index.json');
+            console.log('Looking for API index at:', apiIndexPath);
+            
+            if (!fs.existsSync(apiIndexPath)) {
+                throw new Error(`API index file not found: ${apiIndexPath}`);
+            }
+
+            const apiIndexContent = fs.readFileSync(apiIndexPath, 'utf8');
+            const apiIndex = JSON.parse(apiIndexContent);
+            
+            if (apiIndex.webOSTV_APIs?.apis) {
+                this.apis = apiIndex.webOSTV_APIs.apis.map((api: any) => ({
+                    serviceName: api.serviceName,
+                    serviceUri: api.serviceUri,
+                    category: api.category,
+                    description: api.description,
+                    status: api.status
+                }));
+                console.log(`Loaded ${this.apis.length} APIs from local files`);
+            }
+        } catch (error) {
+            console.error('Failed to load APIs from local files:', error);
+            throw error;
+        }
     }
 
     private async cacheCommonMethods(): Promise<void> {
@@ -152,6 +235,13 @@ export class WebOSAPIProvider {
     async generateCodeAtCursor(editor: vscode.TextEditor): Promise<void> {
         const position = editor.selection.active;
         const document = editor.document;
+        
+        // Safety check for position parameter
+        if (!position || typeof position.line !== 'number' || typeof position.character !== 'number') {
+            console.warn('⚠️ Invalid cursor position:', position);
+            vscode.window.showWarningMessage('Invalid cursor position detected');
+            return;
+        }
         
         // Quick picker for API selection
         const apiItems = this.apis.map(api => ({
@@ -237,8 +327,21 @@ export class WebOSAPIProvider {
     }
 
     async refreshAPIs(): Promise<void> {
-        await this.loadAPIs();
-        this.statusBarItem.text = `$(rocket) webOS TV (${this.apis.length} APIs)`;
+        try {
+            await this.loadAPIs();
+            const apiCount = this.apis.length;
+            if (apiCount > 0) {
+                this.statusBarItem.text = `$(rocket) webOS TV (${apiCount} APIs)`;
+                this.statusBarItem.tooltip = `webOS TV API Assistant - ${apiCount} APIs loaded from MCP server`;
+                vscode.window.showInformationMessage(`✅ MCP server connected! Loaded ${apiCount} webOS TV APIs`);
+            } else {
+                this.statusBarItem.text = '$(rocket) webOS TV (Offline)';
+                this.statusBarItem.tooltip = 'webOS TV API Assistant - Using offline completions\nMCP server unavailable - basic functionality available';
+            }
+        } catch (error) {
+            console.error('Failed to refresh APIs:', error);
+            vscode.window.showErrorMessage(`Failed to refresh APIs: ${error}`);
+        }
     }
 
     private getSearchResultsHTML(results: string, query: string): string {
@@ -311,5 +414,447 @@ export class WebOSAPIProvider {
 
     getMethods(): WebOSMethod[] {
         return this.methods;
+    }
+
+    isReady(): boolean {
+        // Consider ready if initialized, even with 0 APIs (for fallback completions)
+        return this.isInitialized;
+    }
+
+    async searchAndGetMethods(serviceName: string): Promise<any[]> {
+        try {
+            console.log('🔍 Searching methods for service:', serviceName);
+            
+            // Quick test to see if MCP server is returning any methods at all
+            const quickTestResponse = await this.mcpClient.callTool('webos_search_methods', {
+                apiName: 'audio', // Try a common service first
+                query: '*',
+                includeDeprecated: false
+            });
+            
+            if (quickTestResponse?.content?.[0]?.text) {
+                const quickTestMethods = this.parseMethodsResponse(quickTestResponse.content[0].text);
+                if (quickTestMethods.length === 0) {
+                    console.log('⚠️ MCP server returned 0 methods for audio - likely server issue, skipping MCP search');
+                    return [];
+                }
+                console.log(`✅ MCP server is working (found ${quickTestMethods.length} audio methods), proceeding with search`);
+            }
+            
+            // Create a comprehensive mapping for service names
+            const serviceNameMapping: Record<string, string[]> = {
+                'Connection Manager': ['connectionmanager', 'connection-manager', 'connection', 'cm'],
+                'Activity Manager': ['activitymanager', 'activity-manager', 'activity', 'am', 'palm.activitymanager'],
+                'Settings Service': ['settings', 'setting', 'settings-service'],
+                'Audio': ['audio', 'audio-service', 'webos.service.audio', 'com.webos.service.audio', 'service.audio'],
+                'System Service': ['systemservice', 'system-service', 'system', 'webos.service.systemservice'],
+                'Application Manager': ['applicationmanager', 'application-manager', 'app-manager', 'appmanager', 'webos.applicationManager'],
+                'BLE GATT': ['ble', 'ble-gatt', 'webos.service.ble', 'com.webos.service.ble'],
+                'Database': ['db', 'database', 'webos.service.db', 'com.webos.service.db'],
+                'DRM': ['drm', 'webos.service.drm', 'com.webos.service.drm'],
+                'Magic Remote': ['magicremote', 'magic-remote', 'webos.service.magicremote'],
+                'Media Database': ['mediadb', 'media-database', 'webos.service.mediadb'],
+                'TV Device Information': [
+                    'tv.systemproperty', 'systemproperty', 'webos.service.tv.systemproperty',
+                    'tv-device-information', 'tvdeviceinformation', 'tv_device_information',
+                    'device-information', 'deviceinformation', 'device_information',
+                    'tv-device', 'tvdevice', 'tv_device', 'tv-info', 'tvinfo', 'tv_info',
+                    'system-property', 'systemprop', 'system_property'
+                ]
+            };
+            
+            // Try different variations of the service name
+            const baseVariations = [
+                serviceName,
+                serviceName.toLowerCase(),
+                serviceName.replace(/\s+/g, ''),
+                serviceName.replace(/\s+/g, '').toLowerCase(),
+                serviceName.replace(/\s+/g, '-').toLowerCase()
+            ];
+            
+            // Add specific mappings if available
+            const specificMappings = serviceNameMapping[serviceName] || [];
+            
+            const serviceVariations = [...baseVariations, ...specificMappings];
+            
+            for (const variation of serviceVariations) {
+                console.log(`🔍 Trying service name variation: "${variation}"`);
+                
+                const response = await this.mcpClient.callTool('webos_search_methods', {
+                    apiName: variation,
+                    query: '*', // Get all methods
+                    includeDeprecated: false
+                });
+
+                if (response?.content?.[0]?.text) {
+                    console.log('📋 Raw MCP response for methods:', response.content[0].text);
+                    const methods = this.parseMethodsResponse(response.content[0].text);
+                    
+                    if (methods.length > 0) {
+                        console.log(`✅ Found ${methods.length} methods for variation: "${variation}"`);
+                        return methods;
+                    }
+                }
+            }
+            
+            console.log('❌ No methods found for any service name variation');
+            
+            // If no methods found and MCP server seems to be having issues, skip extensive searching
+            console.log('❌ No methods found for basic variations, skipping extensive MCP search');
+            
+            // Try to get available services from MCP to help with debugging
+            try {
+                console.log('🔍 Trying to get available services from MCP...');
+                const servicesResponse = await this.mcpClient.callTool('webos_list_apis');
+                if (servicesResponse?.content?.[0]?.text) {
+                    console.log('📋 Available services from MCP:', servicesResponse.content[0].text.substring(0, 500) + '...');
+                    
+                    // Try to extract URI-based service names first for Audio
+                    if (serviceName.toLowerCase() === 'audio') {
+                        console.log('🎵 Special handling for Audio service');
+                        // Improved regex to extract clean URIs without backticks
+                        const audioURIMatches = servicesResponse.content[0].text.match(/luna:\/\/[a-zA-Z0-9.-]+audio[a-zA-Z0-9.-]*/gi);
+                        if (audioURIMatches) {
+                            console.log('🔗 Found Audio URIs (raw):', audioURIMatches);
+                            
+                            // Clean URIs by removing backticks and other markdown characters
+                            const cleanURIs = audioURIMatches.map((uri: string) => uri.replace(/[`'"]/g, '').trim());
+                            console.log('🧹 Cleaned Audio URIs:', cleanURIs);
+                            
+                            for (const uri of cleanURIs) {
+                                const uriBasedNames = this.extractServiceNameFromURI(uri);
+                                console.log(`🎯 Trying URI-based names for Audio: ${uriBasedNames}`);
+                                
+                                for (const uriName of uriBasedNames) {
+                                    console.log(`🔍 Trying URI-based service name: "${uriName}"`);
+                                    const response = await this.mcpClient.callTool('webos_search_methods', {
+                                        apiName: uriName,
+                                        query: '*',
+                                        includeDeprecated: false
+                                    });
+                                    
+                                    if (response?.content?.[0]?.text) {
+                                        const methods = this.parseMethodsResponse(response.content[0].text);
+                                        if (methods.length > 0) {
+                                            console.log(`✅ Found ${methods.length} methods for URI-based name: "${uriName}"`);
+                                            return methods;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Extract service names for debugging only (no extensive testing)
+                    const availableServices = this.extractServiceNamesFromListResponse(servicesResponse.content[0].text);
+                    console.log('🎯 Available services from MCP:', availableServices.length, 'services found');
+                    console.log('📋 Service list:', availableServices.slice(0, 5).join(', '), availableServices.length > 5 ? '...' : '');
+                    
+                    // Try one closest match only (no extensive scanning)
+                    const closestMatch = this.findClosestServiceMatch(serviceName, availableServices);
+                    if (closestMatch && closestMatch !== serviceName) {
+                        console.log(`🎯 Trying one closest match: "${closestMatch}"`);
+                        const response = await this.mcpClient.callTool('webos_search_methods', {
+                            apiName: closestMatch,
+                            query: '*',
+                            includeDeprecated: false
+                        });
+                        
+                        if (response?.content?.[0]?.text) {
+                            const methods = this.parseMethodsResponse(response.content[0].text);
+                            if (methods.length > 0) {
+                                console.log(`✅ Found ${methods.length} methods for closest match: "${closestMatch}"`);
+                                return methods;
+                            } else {
+                                console.log(`❌ Closest match "${closestMatch}" also returned 0 methods - MCP server likely has issues`);
+                            }
+                        }
+                    } else {
+                        console.log('❌ No close match found or same as original service name');
+                    }
+                }
+            } catch (servicesError) {
+                console.warn('⚠️ Failed to get services list from MCP:', servicesError);
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ Failed to search methods via MCP:', error);
+        }
+        
+        return [];
+    }
+
+    private parseMethodsResponse(text: string): any[] {
+        const methods: any[] = [];
+        
+        try {
+            // Try to parse as JSON first
+            const jsonData = JSON.parse(text);
+            if (Array.isArray(jsonData)) {
+                return jsonData;
+            }
+            if (jsonData.methods && Array.isArray(jsonData.methods)) {
+                return jsonData.methods;
+            }
+        } catch (e) {
+            // If not JSON, parse markdown format
+            console.log('📝 Parsing methods from markdown format');
+            
+            const lines = text.split('\n');
+            let currentMethod: any = {};
+            
+            for (const line of lines) {
+                if (line.startsWith('**') && line.includes('**')) {
+                    // New method entry
+                    if (currentMethod.name) {
+                        methods.push(currentMethod);
+                    }
+                    
+                    const match = line.match(/\*\*(.*?)\*\*/);
+                    if (match) {
+                        currentMethod = {
+                            name: match[1],
+                            deprecated: false
+                        };
+                    }
+                } else if (line.startsWith('- Description:')) {
+                    currentMethod.description = line.replace('- Description: ', '');
+                } else if (line.startsWith('- Deprecated:')) {
+                    currentMethod.deprecated = line.includes('true');
+                }
+            }
+            
+            // Add the last method
+            if (currentMethod.name) {
+                methods.push(currentMethod);
+            }
+        }
+        
+        console.log(`📋 Parsed ${methods.length} methods:`, methods);
+        return methods;
+    }
+
+    private extractServiceNamesFromListResponse(text: string): string[] {
+        const serviceNames: string[] = [];
+        
+        try {
+            // Try to parse as JSON first
+            const jsonData = JSON.parse(text);
+            if (jsonData.webOSTV_APIs?.apis) {
+                return jsonData.webOSTV_APIs.apis.map((api: any) => api.serviceName || api.name);
+            }
+        } catch (e) {
+            // If not JSON, parse markdown format
+            const lines = text.split('\n');
+            for (const line of lines) {
+                if (line.startsWith('**') && line.includes('**')) {
+                    const match = line.match(/\*\*(.*?)\*\*/);
+                    if (match) {
+                        serviceNames.push(match[1]);
+                    }
+                }
+            }
+        }
+        
+        return serviceNames;
+    }
+
+    private findClosestServiceMatch(targetService: string, availableServices: string[]): string | null {
+        const target = targetService.toLowerCase().replace(/\s+/g, '');
+        
+        // Exact match first
+        for (const service of availableServices) {
+            if (service.toLowerCase().replace(/\s+/g, '') === target) {
+                return service;
+            }
+        }
+        
+        // Partial match (contains)
+        for (const service of availableServices) {
+            const serviceNormalized = service.toLowerCase().replace(/\s+/g, '');
+            if (serviceNormalized.includes(target) || target.includes(serviceNormalized)) {
+                return service;
+            }
+        }
+        
+        // Fuzzy match by checking keywords
+        const targetKeywords = targetService.toLowerCase().split(/\s+/);
+        for (const service of availableServices) {
+            const serviceKeywords = service.toLowerCase().split(/\s+/);
+            const intersection = targetKeywords.filter(keyword => 
+                serviceKeywords.some(serviceKeyword => 
+                    serviceKeyword.includes(keyword) || keyword.includes(serviceKeyword)
+                )
+            );
+            
+            if (intersection.length > 0) {
+                return service;
+            }
+        }
+        
+        return null;
+    }
+
+    private extractServiceNameFromURI(uri: string): string[] {
+        console.log(`🔗 Extracting service name from URI: ${uri}`);
+        
+        const variations: string[] = [];
+        
+        // Extract from luna://com.webos.service.audio -> audio, service.audio, webos.service.audio, com.webos.service.audio
+        const uriParts = uri.replace('luna://', '').split('.');
+        
+        if (uriParts.length > 0) {
+            // Get the last part (e.g., "audio" from "com.webos.service.audio")
+            const lastPart = uriParts[uriParts.length - 1];
+            variations.push(lastPart);
+            
+            // Get combinations like "service.audio"
+            if (uriParts.length > 1) {
+                variations.push(uriParts.slice(-2).join('.'));
+            }
+            
+            // Get combinations like "webos.service.audio"
+            if (uriParts.length > 2) {
+                variations.push(uriParts.slice(-3).join('.'));
+            }
+            
+            // Get the full service name without luna://
+            variations.push(uriParts.join('.'));
+        }
+        
+        console.log(`📝 Generated URI-based variations: ${variations}`);
+        return variations;
+    }
+
+    private async loadFallbackAPIs(): Promise<void> {
+        try {
+            console.log('🔄 Loading fallback APIs from local files...');
+            
+            const extensionPath = this.getExtensionPath();
+            if (!extensionPath) {
+                console.warn('⚠️ Extension path not found, skipping fallback API loading');
+                return;
+            }
+
+            const apiDirectory = path.join(extensionPath, 'mcp-server', 'apis');
+            console.log(`📁 Looking for API files in: ${apiDirectory}`);
+
+            const apiFiles = [
+                'audio-api.json',
+                'activity-manager-api.json',
+                'application-manager-api.json',
+                'connection-manager-api.json',
+                'settings-service-api.json',
+                'system-service-api.json',
+                'tv-device-information-api.json',
+                'database-api.json',
+                'drm-api.json',
+                'ble-gatt-api.json',
+                'magic-remote-api.json',
+                'media-database-api.json',
+                'keymanager3-api.json',
+                'device-unique-id-api.json',
+                'camera-api.json'
+            ];
+
+            for (const fileName of apiFiles) {
+                try {
+                    const filePath = path.join(apiDirectory, fileName);
+                    const fileContent = await new Promise<string>((resolve, reject) => {
+                        fs.readFile(filePath, 'utf8', (err, data) => {
+                            if (err) reject(err);
+                            else resolve(data);
+                        });
+                    });
+                    const apiData = JSON.parse(fileContent);
+                    
+                    if (apiData.apiInfo && apiData.methods) {
+                        const serviceName = apiData.apiInfo.serviceName;
+                        this.fallbackAPIs.set(serviceName, apiData);
+                        console.log(`✅ Loaded fallback API: ${serviceName} (${apiData.methods.length} methods)`);
+                    }
+                } catch (fileError) {
+                    console.warn(`⚠️ Failed to load ${fileName}:`, fileError);
+                }
+            }
+
+            console.log(`🎯 Loaded ${this.fallbackAPIs.size} fallback APIs`);
+        } catch (error) {
+            console.error('❌ Failed to load fallback APIs:', error);
+        }
+    }
+
+    private getExtensionPath(): string | undefined {
+        // Try to get extension path from VS Code context
+        const extensions = vscode.extensions.all;
+        const thisExtension = extensions.find(ext => ext.id.includes('webos-tv-api-assistant'));
+        
+        if (thisExtension) {
+            return thisExtension.extensionPath;
+        }
+
+        // Fallback: try to determine from current file location
+        try {
+            const currentPath = __dirname;
+            // Navigate up from dist/providers to extension root
+            const extensionPath = path.resolve(currentPath, '..', '..');
+            return extensionPath;
+        } catch (error) {
+            console.warn('⚠️ Could not determine extension path:', error);
+            return undefined;
+        }
+    }
+
+    public getFallbackMethods(serviceName: string): any[] {
+        console.log(`🔍 Getting fallback methods for service: "${serviceName}"`);
+        
+        // Try exact match first
+        let apiData = this.fallbackAPIs.get(serviceName);
+        
+        // If no exact match, try case-insensitive search
+        if (!apiData) {
+            for (const [key, data] of this.fallbackAPIs.entries()) {
+                if (key.toLowerCase() === serviceName.toLowerCase()) {
+                    apiData = data;
+                    break;
+                }
+            }
+        }
+
+        // Try partial matching
+        if (!apiData) {
+            for (const [key, data] of this.fallbackAPIs.entries()) {
+                if (key.toLowerCase().includes(serviceName.toLowerCase()) || 
+                    serviceName.toLowerCase().includes(key.toLowerCase())) {
+                    apiData = data;
+                    console.log(`🎯 Found partial match: "${key}" for "${serviceName}"`);
+                    break;
+                }
+            }
+        }
+
+        if (apiData && apiData.methods) {
+            console.log(`✅ Found ${apiData.methods.length} fallback methods for ${serviceName}`);
+            return apiData.methods.map((method: any) => ({
+                name: method.name,
+                description: method.description || `${method.name} method`,
+                deprecated: method.deprecated || false,
+                parameters: method.parameters || [],
+                returns: method.returns,
+                examples: method.examples || []
+            }));
+        }
+
+        console.log(`❌ No fallback methods found for ${serviceName}`);
+        return [];
+    }
+
+    public getFallbackAPIInfo(serviceName: string): any | null {
+        const apiData = this.fallbackAPIs.get(serviceName);
+        return apiData ? apiData.apiInfo : null;
+    }
+
+    public listFallbackAPIs(): string[] {
+        return Array.from(this.fallbackAPIs.keys());
     }
 }
