@@ -1,7 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import pkg from 'glob';
-const { glob } = pkg;
+import { glob } from 'glob';
 import type { WebOSAPI } from '../types/webos-api.js';
 
 export interface CodeAnalysisResult {

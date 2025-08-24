@@ -40,39 +40,77 @@ class WebOSHoverProvider {
         this.apiProvider = apiProvider;
     }
     async provideHover(document, position, token) {
-        const wordRange = document.getWordRangeAtPosition(position);
-        if (!wordRange)
+        // Safety check for position parameter
+        if (!position || typeof position.line !== 'number' || typeof position.character !== 'number') {
+            console.warn('⚠️ Invalid position parameter in hover provider:', position);
             return undefined;
-        const word = document.getText(wordRange);
+        }
+        // Safety check for document bounds
+        if (position.line >= document.lineCount || position.line < 0) {
+            console.warn('⚠️ Position line out of bounds in hover provider:', position.line, 'document lines:', document.lineCount);
+            return undefined;
+        }
         const line = document.lineAt(position.line).text;
-        // Check if hovering over a Luna service URI
-        if (this.isLunaServiceURI(word, line)) {
-            return this.createServiceURIHover(word);
+        console.log(`🔍 Hover at position (${position.line}, ${position.character}): "${line}"`);
+        // Check if hovering over a complete Luna service URI
+        const fullURI = this.extractFullURIFromLine(line, position.character);
+        if (fullURI) {
+            console.log(`🎯 Found full URI: "${fullURI}"`);
+            return this.createServiceURIHover(fullURI);
         }
         // Check if hovering over a method name in webOS service call
-        if (this.isMethodName(word, line)) {
-            return this.createMethodHover(word, line);
-        }
-        // Check if hovering over webOS.service.request
-        if (word === 'webOS' || line.includes('webOS.service.request')) {
-            return this.createWebOSServiceHover();
+        const wordRange = document.getWordRangeAtPosition(position);
+        if (wordRange) {
+            const word = document.getText(wordRange);
+            console.log(`📝 Word under cursor: "${word}"`);
+            if (this.isMethodName(word, line)) {
+                console.log(`🎯 Detected method name: "${word}"`);
+                return this.createMethodHoverAsync(word, line);
+            }
+            // Check if hovering over webOS.service.request
+            if (word === 'webOS' || word === 'service' || word === 'request') {
+                if (line.includes('webOS.service.request')) {
+                    console.log('🎯 Detected webOS.service.request');
+                    return this.createWebOSServiceHover();
+                }
+            }
         }
         return undefined;
     }
-    isLunaServiceURI(word, line) {
-        return line.includes('luna://') &&
-            (line.includes(word) && word.includes('luna://') ||
-                line.includes(`luna://${word}`) ||
-                line.includes(`luna://com.${word}`) ||
-                line.includes(`luna://com.webos.${word}`));
+    extractFullURIFromLine(line, character) {
+        // Extract complete luna:// URI from the line
+        const uriMatch = line.match(/luna:\/\/[a-zA-Z0-9.-]+/g);
+        if (!uriMatch)
+            return null;
+        // Find which URI the cursor is positioned over
+        for (const uri of uriMatch) {
+            const startIndex = line.indexOf(uri);
+            const endIndex = startIndex + uri.length;
+            if (character >= startIndex && character <= endIndex) {
+                console.log(`🎯 Cursor is over URI: "${uri}" (position ${character} between ${startIndex}-${endIndex})`);
+                return uri;
+            }
+        }
+        return null;
     }
     isMethodName(word, line) {
-        return line.includes('method:') &&
-            line.includes(`'${word}'` || `"${word}"`);
+        // Check if the word is in method context and properly quoted
+        const hasMethodContext = line.includes('method:');
+        const isQuoted = line.includes(`'${word}'`) || line.includes(`"${word}"`);
+        console.log(`🔍 Method check for "${word}": hasMethodContext=${hasMethodContext}, isQuoted=${isQuoted}`);
+        return hasMethodContext && isQuoted;
     }
     createServiceURIHover(serviceURI) {
+        console.log(`🔍 Looking for API info for URI: "${serviceURI}"`);
         const apis = this.apiProvider.getAPIs();
-        const api = apis.find(a => a.serviceUri.includes(serviceURI) || serviceURI.includes(a.serviceUri));
+        console.log(`📋 Available APIs: ${apis.map(a => a.serviceUri).join(', ')}`);
+        // Try exact match first
+        let api = apis.find(a => a.serviceUri === serviceURI);
+        // If no exact match, try partial matching
+        if (!api) {
+            api = apis.find(a => a.serviceUri.includes(serviceURI) || serviceURI.includes(a.serviceUri));
+        }
+        console.log(`🎯 Found API: ${api ? api.serviceName : 'none'}`);
         if (api) {
             const markdown = new vscode.MarkdownString();
             markdown.isTrusted = true;
@@ -99,16 +137,20 @@ class WebOSHoverProvider {
     }
     createMethodHover(methodName, line) {
         const markdown = new vscode.MarkdownString();
+        console.log(`🔍 Creating method hover for: "${methodName}" in line: "${line}"`);
         // Extract service URI from the line
         const serviceMatch = line.match(/luna:\/\/[^'"]+/);
         if (serviceMatch) {
             const serviceURI = serviceMatch[0];
+            console.log(`🔗 Extracted service URI: "${serviceURI}"`);
             const apis = this.apiProvider.getAPIs();
-            const api = apis.find(a => a.serviceUri === serviceURI);
+            let api = apis.find(a => a.serviceUri === serviceURI);
             if (api) {
+                console.log(`🎯 Found API: ${api.serviceName}`);
                 const methodInfo = this.getMethodInfo(api.serviceName, methodName);
                 markdown.appendMarkdown(`### ${api.serviceName}.${methodName}\n\n`);
                 if (methodInfo) {
+                    console.log(`✅ Found method info for ${methodName}`);
                     markdown.appendMarkdown(`${methodInfo.description}\n\n`);
                     if (methodInfo.deprecated) {
                         markdown.appendMarkdown(`⚠️ **DEPRECATED** - This method is deprecated\n\n`);
@@ -127,10 +169,94 @@ class WebOSHoverProvider {
                     }
                 }
                 else {
+                    console.log(`❌ No method info found for ${methodName} in ${api.serviceName}`);
                     markdown.appendMarkdown(`Method in ${api.serviceName}\n\n`);
                 }
                 markdown.appendMarkdown(`[📖 ${api.serviceName} Documentation](https://webostv.developer.lge.com/develop/references/)\n\n`);
             }
+            else {
+                console.log(`❌ No API found for URI: ${serviceURI}`);
+                // Fallback for unrecognized service
+                markdown.appendMarkdown(`### ${methodName}\n\n`);
+                markdown.appendMarkdown(`Method in Luna Service: \`${serviceURI}\`\n\n`);
+            }
+        }
+        else {
+            console.log(`❌ No service URI found in line`);
+        }
+        return new vscode.Hover(markdown);
+    }
+    async createMethodHoverAsync(methodName, line) {
+        const markdown = new vscode.MarkdownString();
+        console.log(`🔍 Creating async method hover for: "${methodName}" in line: "${line}"`);
+        // Extract service URI from the line
+        const serviceMatch = line.match(/luna:\/\/[^'"]+/);
+        if (serviceMatch) {
+            const serviceURI = serviceMatch[0];
+            console.log(`🔗 Extracted service URI: "${serviceURI}"`);
+            const apis = this.apiProvider.getAPIs();
+            let api = apis.find(a => a.serviceUri === serviceURI);
+            if (api) {
+                console.log(`🎯 Found API: ${api.serviceName}`);
+                // Try to get method info from MCP first
+                let methodInfo = await this.getMethodInfoFromMCP(api.serviceName, methodName);
+                // Fallback to file-based info if MCP fails
+                if (!methodInfo) {
+                    methodInfo = this.getMethodInfoFromFile(api.serviceName, methodName);
+                }
+                // Final fallback to hardcoded info
+                if (!methodInfo) {
+                    methodInfo = this.getMethodInfo(api.serviceName, methodName);
+                }
+                markdown.appendMarkdown(`### ${api.serviceName}.${methodName}\n\n`);
+                if (methodInfo) {
+                    console.log(`✅ Found method info for ${methodName}`);
+                    markdown.appendMarkdown(`${methodInfo.description}\n\n`);
+                    if (methodInfo.deprecated) {
+                        markdown.appendMarkdown(`⚠️ **DEPRECATED** - This method is deprecated\n\n`);
+                    }
+                    if (methodInfo.parameters && methodInfo.parameters.length > 0) {
+                        markdown.appendMarkdown(`**Parameters:**\n`);
+                        for (const param of methodInfo.parameters) {
+                            const required = param.required ? '**required**' : '*optional*';
+                            const paramType = param.type || 'any';
+                            const paramDesc = param.description || 'No description available';
+                            markdown.appendMarkdown(`- \`${param.name}\` (${paramType}) - ${required} - ${paramDesc}\n`);
+                        }
+                        markdown.appendMarkdown(`\n`);
+                    }
+                    if (methodInfo.returnValue) {
+                        markdown.appendMarkdown(`**Returns:** ${methodInfo.returnValue}\n\n`);
+                    }
+                    if (methodInfo.example) {
+                        markdown.appendMarkdown(`**Example:**\n`);
+                        markdown.appendCodeblock(methodInfo.example, 'javascript');
+                        markdown.appendMarkdown(`\n`);
+                    }
+                }
+                else {
+                    console.log(`❌ No method info found for ${methodName} in ${api.serviceName}`);
+                    markdown.appendMarkdown(`Method in ${api.serviceName}\n\n`);
+                    markdown.appendMarkdown(`More information available from [webOS TV API Documentation](https://webostv.developer.lge.com/develop/references/)\n\n`);
+                }
+                markdown.appendMarkdown(`[📖 ${api.serviceName} Documentation](https://webostv.developer.lge.com/develop/references/)\n\n`);
+            }
+            else {
+                console.log(`❌ No API found for URI: ${serviceURI}`);
+                // Enhanced fallback for unrecognized service
+                markdown.appendMarkdown(`### ${methodName}\n\n`);
+                markdown.appendMarkdown(`Method in Luna Service: \`${serviceURI}\`\n\n`);
+                markdown.appendMarkdown(`**Usage:**\n`);
+                markdown.appendCodeblock(this.generateExampleCode('Unknown Service', methodName, serviceURI), 'javascript');
+                markdown.appendMarkdown(`\n[📖 webOS TV API Documentation](https://webostv.developer.lge.com/develop/references/)\n\n`);
+            }
+        }
+        else {
+            console.log(`❌ No service URI found in line`);
+            // Generic method information
+            markdown.appendMarkdown(`### ${methodName}\n\n`);
+            markdown.appendMarkdown(`webOS TV Luna Service method\n\n`);
+            markdown.appendMarkdown(`[📖 webOS TV API Documentation](https://webostv.developer.lge.com/develop/references/)\n\n`);
         }
         return new vscode.Hover(markdown);
     }
@@ -163,9 +289,34 @@ class WebOSHoverProvider {
         markdown.appendMarkdown(`\n[📖 webOS TV Development Guide](https://webostv.developer.lge.com/develop/)\n\n`);
         return new vscode.Hover(markdown);
     }
+    async getMethodInfoFromMCP(serviceName, methodName) {
+        try {
+            console.log(`🔍 Getting method info from MCP for ${serviceName}.${methodName}`);
+            // Try to get method details from MCP server
+            const response = await this.apiProvider.searchAndGetMethods(serviceName);
+            if (response && response.length > 0) {
+                const method = response.find((m) => m.name === methodName);
+                if (method) {
+                    console.log(`✅ Found method info from MCP:`, method);
+                    return {
+                        description: method.description || `${methodName} method from ${serviceName}`,
+                        deprecated: method.deprecated || false,
+                        parameters: method.parameters || [],
+                        example: method.example || this.generateExampleCode(serviceName, methodName)
+                    };
+                }
+            }
+            console.log(`⚠️ Method ${methodName} not found in MCP, using fallback`);
+            return this.getFallbackMethodInfo(serviceName, methodName);
+        }
+        catch (error) {
+            console.warn(`❌ Failed to get method info from MCP:`, error);
+            return this.getFallbackMethodInfo(serviceName, methodName);
+        }
+    }
     getMethodInfo(serviceName, methodName) {
-        // Hardcoded method info for demo - in real implementation,
-        // this would come from the MCP server
+        // Legacy synchronous method for compatibility
+        // In practice, this should be replaced with async calls
         const methodDatabase = {
             'Audio': {
                 'getVolume': {
@@ -222,9 +373,153 @@ class WebOSHoverProvider {
                         }
                     ]
                 }
+            },
+            'TV Device Information': {
+                'getSystemInfo': {
+                    description: 'TV 시스템 정보를 조회합니다. modelName, firmwareVersion, UHD 지원 여부 등을 확인할 수 있습니다.',
+                    deprecated: false,
+                    parameters: [
+                        {
+                            name: 'keys',
+                            type: 'array',
+                            required: true,
+                            description: '조회할 시스템 정보 키 목록 (예: ["modelName", "firmwareVersion", "UHD"])'
+                        }
+                    ],
+                    example: `webOS.service.request('luna://com.webos.service.tv.systemproperty', {
+    method: 'getSystemInfo',
+    parameters: {
+        keys: ['modelName', 'firmwareVersion', 'UHD']
+    },
+    onSuccess: function(response) {
+        console.log('Model:', response.modelName);
+        console.log('Firmware:', response.firmwareVersion);
+        console.log('UHD Support:', response.UHD);
+    },
+    onFailure: function(error) {
+        console.error('Error:', error.errorText);
+    }
+});`
+                },
+                'getSystemProperty': {
+                    description: '특정 시스템 속성 값을 조회합니다.',
+                    deprecated: false,
+                    parameters: [
+                        {
+                            name: 'key',
+                            type: 'string',
+                            required: true,
+                            description: '조회할 시스템 속성 키'
+                        }
+                    ]
+                }
             }
         };
         return methodDatabase[serviceName]?.[methodName];
+    }
+    getFallbackMethodInfo(serviceName, methodName) {
+        // Enhanced fallback with common webOS TV patterns
+        const commonPatterns = {
+            'get': {
+                description: `Retrieves ${methodName.replace('get', '').toLowerCase()} information`,
+                parameters: [
+                    {
+                        name: 'subscribe',
+                        type: 'boolean',
+                        required: false,
+                        description: 'Subscribe for continuous updates'
+                    }
+                ]
+            },
+            'set': {
+                description: `Sets ${methodName.replace('set', '').toLowerCase()} configuration`,
+                parameters: []
+            },
+            'create': {
+                description: `Creates a new ${methodName.replace('create', '').toLowerCase()}`,
+                parameters: []
+            },
+            'delete': {
+                description: `Deletes ${methodName.replace('delete', '').toLowerCase()}`,
+                parameters: []
+            }
+        };
+        const methodPrefix = Object.keys(commonPatterns).find(prefix => methodName.toLowerCase().startsWith(prefix));
+        const baseInfo = methodPrefix ? commonPatterns[methodPrefix] : {
+            description: `${methodName} method from ${serviceName}`,
+            parameters: []
+        };
+        return {
+            ...baseInfo,
+            deprecated: false,
+            example: this.generateExampleCode(serviceName, methodName)
+        };
+    }
+    generateExampleCode(serviceName, methodName, serviceURI) {
+        const uri = serviceURI || this.getServiceURIFromName(serviceName);
+        const hasParameters = methodName.toLowerCase().startsWith('set') ||
+            methodName.toLowerCase().includes('create') ||
+            methodName.toLowerCase().includes('config');
+        const exampleParams = hasParameters ? `
+        parameters: {
+            // Add required parameters here
+        },` : `
+        parameters: {},`;
+        return `webOS.service.request('${uri}', {
+    method: '${methodName}',${exampleParams}
+    onSuccess: function(response) {
+        console.log('Success:', response);
+    },
+    onFailure: function(error) {
+        console.error('Error:', error.errorText);
+    }
+});`;
+    }
+    getServiceURIFromName(serviceName) {
+        const uriMapping = {
+            'Audio': 'luna://com.webos.service.audio',
+            'Activity Manager': 'luna://com.palm.activitymanager',
+            'TV Device Information': 'luna://com.webos.service.tv.systemproperty',
+            'Settings Service': 'luna://com.webos.service.settings',
+            'System Service': 'luna://com.webos.service.systemservice',
+            'Application Manager': 'luna://com.webos.applicationManager',
+            'Connection Manager': 'luna://com.webos.service.connectionmanager',
+            'Database': 'luna://com.webos.service.db',
+            'DRM': 'luna://com.webos.service.drm'
+        };
+        return uriMapping[serviceName] || 'luna://com.webos.service.unknown';
+    }
+    getMethodInfoFromFile(serviceName, methodName) {
+        console.log(`🔍 Getting method info from file for ${serviceName}.${methodName}`);
+        const fallbackMethods = this.apiProvider.getFallbackMethods(serviceName);
+        if (fallbackMethods.length > 0) {
+            const method = fallbackMethods.find(m => m.name === methodName);
+            if (method) {
+                console.log(`✅ Found file-based method info for ${methodName}`);
+                // Convert file format to hover format
+                return {
+                    description: method.description || `${methodName} method from ${serviceName}`,
+                    deprecated: method.deprecated || false,
+                    parameters: method.parameters || [],
+                    returnValue: method.returns ? this.formatReturnValue(method.returns) : undefined,
+                    example: method.examples && method.examples.length > 0 ?
+                        method.examples[0].code :
+                        this.generateExampleCode(serviceName, methodName)
+                };
+            }
+        }
+        console.log(`❌ No file-based method info found for ${methodName} in ${serviceName}`);
+        return null;
+    }
+    formatReturnValue(returns) {
+        if (!returns || !returns.parameters) {
+            return 'Object';
+        }
+        const returnParams = returns.parameters.map((param) => {
+            const required = param.required ? '' : '?';
+            return `${param.name}${required}: ${param.type}`;
+        }).join(', ');
+        return `{ ${returnParams} }`;
     }
 }
 exports.WebOSHoverProvider = WebOSHoverProvider;

@@ -4,12 +4,12 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { APIManager } from './services/api-manager.js';
-import { CodeAnalyzer } from './services/code-analyzer.js';
+// import { CodeAnalyzer } from './services/code-analyzer.js'; // Disabled due to glob dependency
 import { APIUpdater } from './services/api-updater.js';
 import { SmartSuggestionEngine } from './services/smart-suggestions.js';
 // Initialize services
 const apiManager = new APIManager();
-let codeAnalyzer;
+let codeAnalyzer; // Disabled due to glob dependency
 let apiUpdater;
 let smartSuggestions;
 // Define tool schemas
@@ -570,7 +570,7 @@ async function main() {
         await apiManager.initialize();
         console.log('API Manager initialized successfully');
         // Initialize AI services
-        codeAnalyzer = new CodeAnalyzer(apiManager['apis']);
+        // codeAnalyzer = new CodeAnalyzer(apiManager['apis']); // Disabled due to glob dependency
         apiUpdater = new APIUpdater();
         smartSuggestions = new SmartSuggestionEngine(apiManager['apis']);
         // Schedule periodic updates
