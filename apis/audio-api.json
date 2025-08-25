@@ -3,46 +3,22 @@
     "serviceName": "Audio",
     "serviceUri": "luna://com.webos.service.audio",
     "category": "media",
-    "description": "볼륨 제어를 위한 메서드를 제공합니다.",
+    "description": "볼륨 음소거 및 증감 제어 메서드를 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2024-01-15",
-    "compatibility": {
-      "webOSTV": {
-        "1.x": true,
-        "2.x": true,
-        "3.x": true,
-        "4.x": true,
-        "5.x": true,
-        "6.x": true,
-        "22": true,
-        "23": true,
-        "24": true,
-        "25": true
-      },
-      "simulator": false,
-      "emulator": {
-        "1.2": true,
-        "2.x": true,
-        "3.x": true,
-        "4.x": true,
-        "5.x": true,
-        "6.x": true
-      }
-    }
+    "lastUpdated": "2025-01-18"
   },
   "methods": [
     {
-      "name": "getVolume",
-      "description": "현재 볼륨 수준을 조회합니다.",
+      "name": "setMuted",
+      "description": "볼륨을 음소거하거나 음소거 해제합니다.",
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
         {
-          "name": "subscribe",
-          "required": false,
+          "name": "muted",
+          "required": true,
           "type": "boolean",
-          "description": "볼륨 변경 알림을 구독할지 여부입니다.",
-          "defaultValue": false
+          "description": "음소거/해제 여부 (true: 음소거, false: 해제)"
         }
       ],
       "returns": {
@@ -51,59 +27,107 @@
             "name": "returnValue",
             "type": "boolean",
             "required": true,
-            "description": "요청의 성공/실패를 나타냅니다."
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
           },
           {
-            "name": "volume",
+            "name": "errorCode",
             "type": "number",
-            "required": true,
-            "description": "현재 볼륨 수준 (0-100)입니다."
+            "required": false,
+            "description": "실패 시 오류 코드"
           },
           {
-            "name": "muted",
-            "type": "boolean",
-            "required": true,
-            "description": "음소거 상태를 나타냅니다."
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
           }
         ]
       },
-      "errors": [],
+      "errors": [
+        { "code": 1, "message": "Not a valid JSON message" }
+      ],
       "examples": [
         {
-          "title": "볼륨 조회",
-          "code": "var request = webOS.service.request('luna://com.webos.service.audio', {\n  method: 'getVolume',\n  parameters: {\n    subscribe: true\n  },\n  onSuccess: function (inResponse) {\n    console.log('Current volume:', inResponse.volume);\n    console.log('Muted:', inResponse.muted);\n  },\n  onFailure: function (inError) {\n    console.log('Get volume failed:', inError.errorText);\n  }\n});",
+          "title": "음소거 설정",
+          "code": "var request = webOS.service.request('luna://com.webos.service.audio', {\n  method: 'setMuted',\n  parameters: { muted: true },\n  onSuccess: function (inResponse) {\n    console.log('TV is muted');\n  },\n  onFailure: function (inError) {\n    console.log('Failed to set muted');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
           "language": "javascript"
         }
       ]
     },
     {
-      "name": "setVolume",
-      "description": "볼륨 수준을 설정합니다.",
+      "name": "volumeDown",
+      "description": "볼륨을 1 감소시킵니다.",
       "emulatorSupport": true,
       "deprecated": false,
-      "parameters": [
-        {
-          "name": "volume",
-          "required": true,
-          "type": "number",
-          "description": "설정할 볼륨 수준 (0-100)입니다."
-        }
-      ],
+      "parameters": [],
       "returns": {
         "parameters": [
           {
             "name": "returnValue",
             "type": "boolean",
             "required": true,
-            "description": "요청의 성공/실패를 나타냅니다."
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
           }
         ]
       },
-      "errors": [],
+      "errors": [
+        { "code": "ERROR_3", "message": "Parameters should be empty" }
+      ],
       "examples": [
         {
-          "title": "볼륨 설정",
-          "code": "var request = webOS.service.request('luna://com.webos.service.audio', {\n  method: 'setVolume',\n  parameters: {\n    volume: 50\n  },\n  onSuccess: function (inResponse) {\n    console.log('Volume set successfully');\n  },\n  onFailure: function (inError) {\n    console.log('Set volume failed:', inError.errorText);\n  }\n});",
+          "title": "볼륨 1 감소",
+          "code": "var request = webOS.service.request('luna://com.webos.service.audio', {\n  method: 'volumeDown',\n  onSuccess: function (inResponse) {\n    console.log('The volume is decreased by 1.');\n  },\n  onFailure: function (inError) {\n    console.log('Failed to decrease volume by 1.');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "volumeUp",
+      "description": "볼륨을 1 증가시킵니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ]
+      },
+      "errors": [
+        { "code": "ERROR_3", "message": "Parameters should be empty" }
+      ],
+      "examples": [
+        {
+          "title": "볼륨 1 증가",
+          "code": "var request = webOS.service.request('luna://com.webos.service.audio', {\n  method: 'volumeUp',\n  onSuccess: function (inResponse) {\n    console.log('The volume is increased by 1.');\n  },\n  onFailure: function (inError) {\n    console.log('Failed to increase volume by 1.');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
           "language": "javascript"
         }
       ]
@@ -112,41 +136,75 @@
   "vscodeExtension": {
     "snippets": [
       {
-        "prefix": "webos-audio-getvolume",
+        "prefix": "webos-audio-setmuted",
         "body": [
           "webOS.service.request('luna://com.webos.service.audio', {",
-          "    method: 'getVolume',",
+          "    method: 'setMuted',",
           "    parameters: {",
-          "        subscribe: ${1:false}",
+          "        muted: ${1:true}",
           "    },",
           "    onSuccess: function (inResponse) {",
+          "        console.log('TV is muted');",
           "        ${2:// Success handling}",
-          "        console.log('Volume:', inResponse.volume);",
           "    },",
           "    onFailure: function (inError) {",
+          "        console.log('Failed to set muted');",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
           "        ${3:// Error handling}",
           "    }",
           "});"
         ],
-        "description": "Audio 볼륨 조회"
+        "description": "Audio 음소거/해제"
       },
       {
-        "prefix": "webos-audio-setvolume",
+        "prefix": "webos-audio-volumedown",
         "body": [
           "webOS.service.request('luna://com.webos.service.audio', {",
-          "    method: 'setVolume',",
-          "    parameters: {",
-          "        volume: ${1:50}",
-          "    },",
+          "    method: 'volumeDown',",
           "    onSuccess: function (inResponse) {",
-          "        ${2:// Success handling}",
+          "        console.log('The volume is decreased by 1.');",
+          "        ${1:// Success handling}",
           "    },",
           "    onFailure: function (inError) {",
-          "        ${3:// Error handling}",
+          "        console.log('Failed to decrease volume by 1.');",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
+          "        ${2:// Error handling}",
           "    }",
           "});"
         ],
-        "description": "Audio 볼륨 설정"
+        "description": "Audio 볼륨 감소"
+      },
+      {
+        "prefix": "webos-audio-volumeup",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.audio', {",
+          "    method: 'volumeUp',",
+          "    onSuccess: function (inResponse) {",
+          "        console.log('The volume is increased by 1.');",
+          "        ${1:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        console.log('Failed to increase volume by 1.');",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
+          "        ${2:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "Audio 볼륨 증가"
+      }
+    ],
+    "completionItems": [
+      { "label": "setMuted", "kind": "Method", "documentation": "볼륨을 음소거하거나 음소거 해제합니다.", "insertText": "setMuted", "detail": "Audio" },
+      { "label": "volumeDown", "kind": "Method", "documentation": "볼륨을 1 감소시킵니다.", "insertText": "volumeDown", "detail": "Audio" },
+      { "label": "volumeUp", "kind": "Method", "documentation": "볼륨을 1 증가시킵니다.", "insertText": "volumeUp", "detail": "Audio" }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.audio'",
+        "checks": [
+          { "field": "method", "validValues": ["setMuted", "volumeDown", "volumeUp"], "required": true, "type": "string" },
+          { "field": "parameters.muted", "required": false, "type": "boolean" }
+        ]
       }
     ]
   }
