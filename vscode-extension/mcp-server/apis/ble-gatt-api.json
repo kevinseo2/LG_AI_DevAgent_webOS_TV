@@ -58,12 +58,12 @@
       "examples": [
         {
           "title": "BLE 사용 가능 여부 단발성 확인",
-          "code": "var request = webOS.service.request(\"luna://com.webos.service.blegatt\", {\n  method: \"isEnabled\",\n  parameters: {},\n  onSuccess: function (inResponse) {\n    console.log('Result:', inResponse);\n  },\n  onFailure: function (inError) {\n    console.log('[" + inError.errorCode + "]: ' + inError.errorText);\n  }\n});",
+          "code": "var request = webOS.service.request(\"luna://com.webos.service.blegatt\", {\n  method: \"isEnabled\",\n  parameters: {},\n  onSuccess: function (inResponse) {\n    console.log('Result:', inResponse);\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
           "language": "javascript"
         },
         {
           "title": "BLE 사용 가능 여부 구독",
-          "code": "var handle = webOS.service.request(\"luna://com.webos.service.blegatt\", {\n  method: \"isEnabled\",\n  parameters: { subscribe: true },\n  onSuccess: function (inResponse) {\n    if (typeof inResponse.subscribed !== 'undefined' && !inResponse.subscribed) {\n      console.log('Failed to subscribe');\n      return;\n    }\n    console.log('Result:', inResponse);\n  },\n  onFailure: function (inError) {\n    console.log('[" + inError.errorCode + "]: ' + inError.errorText);\n  }\n});\n// handle.cancel() 로 구독 해지",
+          "code": "var handle = webOS.service.request(\"luna://com.webos.service.blegatt\", {\n  method: \"isEnabled\",\n  parameters: { subscribe: true },\n  onSuccess: function (inResponse) {\n    if (typeof inResponse.subscribed !== 'undefined' && !inResponse.subscribed) {\n      console.log('Failed to subscribe');\n      return;\n    }\n    console.log('Result:', inResponse);\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});\n// handle.cancel() 로 구독 해지",
           "language": "javascript"
         }
       ]
