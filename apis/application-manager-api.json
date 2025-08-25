@@ -3,37 +3,14 @@
     "serviceName": "Application Manager",
     "serviceUri": "luna://com.webos.applicationManager",
     "category": "system",
-    "description": "지정된 애플리케이션을 명시적으로 실행하거나, 요청된 명령 및 리소스 유형에 따라 상주 애플리케이션을 암시적으로 실행하는 메서드를 제공합니다.",
+    "description": "지정한 앱 ID로 애플리케이션을 실행하거나, 앱 설치 여부를 확인하는 메서드를 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2024-01-15",
-    "compatibility": {
-      "webOSTV": {
-        "1.x": true,
-        "2.x": true,
-        "3.x": true,
-        "4.x": true,
-        "5.x": true,
-        "6.x": true,
-        "22": true,
-        "23": true,
-        "24": true,
-        "25": true
-      },
-      "simulator": true,
-      "emulator": {
-        "1.2": true,
-        "2.x": true,
-        "3.x": true,
-        "4.x": true,
-        "5.x": true,
-        "6.x": true
-      }
-    }
+    "lastUpdated": "2025-01-18"
   },
   "methods": [
     {
       "name": "launch",
-      "description": "지정된 애플리케이션을 실행합니다.",
+      "description": "지정된 앱 ID에 해당하는 애플리케이션을 실행합니다. 매 호출마다 다른 매개변수로 호출될 수 있으며, 앱은 이러한 요청을 직접 처리해야 합니다.",
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
@@ -41,13 +18,13 @@
           "name": "id",
           "required": true,
           "type": "string",
-          "description": "실행할 애플리케이션의 ID입니다."
+          "description": "실행할 애플리케이션의 ID"
         },
         {
           "name": "params",
           "required": false,
           "type": "object",
-          "description": "애플리케이션에 전달할 매개변수입니다."
+          "description": "대상 애플리케이션에 전달할 매개변수 객체"
         }
       ],
       "returns": {
@@ -56,22 +33,119 @@
             "name": "returnValue",
             "type": "boolean",
             "required": true,
-            "description": "요청의 성공/실패를 나타냅니다."
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
           },
           {
-            "name": "appId",
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
             "type": "string",
             "required": false,
-            "description": "실행된 애플리케이션의 ID입니다."
+            "description": "실패 시 오류 메시지"
           }
         ]
       },
-      "errors": [],
+      "errors": [
+        { "code": -1, "message": "General errors." },
+        { "code": -2, "message": "Fail to read schema." },
+        { "code": -3, "message": "No free memory." },
+        { "code": -4, "message": "Failed to allocate memory while launching an app." },
+        { "code": -5, "message": "File download is not supported." },
+        { "code": -6, "message": "No handler for target URI." },
+        { "code": -101, "message": "The app was not found." },
+        { "code": -102, "message": "The app has been locked." },
+        { "code": -103, "message": "Security checks verified failed." },
+        { "code": -104, "message": "Cannot launch a privileged app on development mode from developer apps path." },
+        { "code": -105, "message": "Invalid id is specified." },
+        { "code": -106, "message": "Unsupported app type." },
+        { "code": -107, "message": "Cannot launch the last app by killing a foreground app when another app is launched." },
+        { "code": -201, "message": "Waiting for a native app." },
+        { "code": -202, "message": "Failed to native app launch process." },
+        { "code": -203, "message": "The native app is already launching." },
+        { "code": -300, "message": "General Callchain errors." },
+        { "code": -301, "message": "Failed to download RO (Right Objects)." },
+        { "code": -302, "message": "Failed to check DRM." },
+        { "code": -303, "message": "Failed to check App Signing." },
+        { "code": -304, "message": "Failed to get setting value." },
+        { "code": -305, "message": "Failed to match Pincode." },
+        { "code": -306, "message": "Pin is not matched." },
+        { "code": -307, "message": "Failed to send launch event." },
+        { "code": -308, "message": "Failed to find LaunchPoint." },
+        { "code": -309, "message": "Failed to register kind to DB." },
+        { "code": -310, "message": "Failed to register Permission." },
+        { "code": -311, "message": "EULA errors." }
+      ],
       "examples": [
         {
-          "title": "애플리케이션 실행",
-          "code": "var request = webOS.service.request('luna://com.webos.applicationManager', {\n  method: 'launch',\n  parameters: {\n    id: 'com.webos.app.browser',\n    params: { url: 'https://webostv.developer.lge.com' }\n  },\n  onSuccess: function (inResponse) {\n    console.log('Launch success:', inResponse.appId);\n  },\n  onFailure: function (inError) {\n    console.log('Launch failed:', inError.errorText);\n  }\n});",
+          "title": "앱 실행 - 파라미터 없이",
+          "code": "var request = webOS.service.request('luna://com.webos.applicationManager', {\n  method: 'launch',\n  parameters: { id: 'com.yourdomain.callee' },\n  onSuccess: function (inResponse) {\n    console.log('The app is launched');\n  },\n  onFailure: function (inError) {\n    console.log('Failed to launch the app');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
           "language": "javascript"
+        },
+        {
+          "title": "앱 실행 - 파라미터 포함",
+          "code": "var request = webOS.service.request('luna://com.webos.applicationManager', {\n  method: 'launch',\n  parameters: {\n    id: 'com.yourdomain.callee',\n    params: { customParam1: 'value1', customParam2: 'value2' }\n  },\n  onSuccess: function (inResponse) {\n    console.log('The app is launched');\n  },\n  onFailure: function (inError) {\n    console.log('Failed to launch the app');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "getAppLoadStatus",
+      "description": "지정된 앱 ID의 설치 여부를 반환합니다. 앱 실행 전 존재 여부를 확인하는 데 사용할 수 있습니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "appId",
+          "required": true,
+          "type": "string",
+          "description": "설치 여부를 확인할 애플리케이션의 ID"
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "exist",
+            "type": "boolean",
+            "required": false,
+            "description": "앱 존재 여부 (true: 설치됨, false: 미설치)"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ]
+      },
+      "errors": [
+        { "code": 1, "message": "Invalid appId specified. This error is returned when the appId parameter is empty." }
+      ],
+      "examples": [
+        {
+          "title": "앱 설치 여부 확인",
+          "code": "var request = webOS.service.request('luna://com.webos.applicationManager', {\n  method: 'getAppLoadStatus',\n  parameters: { appId: 'com.yourdomain.callee' },\n  onSuccess: function (inResponse) {\n    if (inResponse.exist) {\n      console.log('The app exists');\n    } else {\n      console.log('The app does not exist');\n    }\n  },\n  onFailure: function (inError) {\n    console.log('Failed to check app installation');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        },
+        {
+          "title": "성공 반환 예시",
+          "code": "{\n  \"exist\": true,\n  \"returnValue\": true\n}",
+          "language": "json"
         }
       ]
     }
@@ -85,19 +159,41 @@
           "    method: 'launch',",
           "    parameters: {",
           "        id: '${1:appId}',",
-          "        params: ${2:{\\}}",
+          "        params: ${2:{}}",
           "    },",
           "    onSuccess: function (inResponse) {",
+          "        console.log('The app is launched');",
           "        ${3:// Success handling}",
-          "        console.log('Launch success:', inResponse.appId);",
           "    },",
           "    onFailure: function (inError) {",
+          "        console.log('Failed to launch the app');",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
           "        ${4:// Error handling}",
-          "        console.log('Launch failed:', inError.errorText);",
           "    }",
           "});"
         ],
         "description": "Application Manager의 launch 메서드 호출"
+      },
+      {
+        "prefix": "webos-app-exists",
+        "body": [
+          "webOS.service.request('luna://com.webos.applicationManager', {",
+          "    method: 'getAppLoadStatus',",
+          "    parameters: {",
+          "        appId: '${1:appId}'",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        if (inResponse.exist) { console.log('The app exists'); } else { console.log('The app does not exist'); }",
+          "        ${2:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        console.log('Failed to check app installation');",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "Application Manager의 getAppLoadStatus 메서드 호출"
       }
     ],
     "completionItems": [
@@ -106,7 +202,24 @@
         "kind": "Method",
         "documentation": "지정된 애플리케이션을 실행합니다.",
         "insertText": "launch",
-        "detail": "luna://com.webos.applicationManager"
+        "detail": "Application Manager"
+      },
+      {
+        "label": "getAppLoadStatus",
+        "kind": "Method",
+        "documentation": "지정된 앱 ID의 설치 여부를 반환합니다.",
+        "insertText": "getAppLoadStatus",
+        "detail": "Application Manager"
+      }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.applicationManager'",
+        "checks": [
+          { "field": "method", "validValues": ["launch", "getAppLoadStatus"], "required": true, "type": "string" },
+          { "field": "parameters.id", "required": false, "type": "string" },
+          { "field": "parameters.appId", "required": false, "type": "string" }
+        ]
       }
     ]
   }
