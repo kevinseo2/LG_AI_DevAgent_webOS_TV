@@ -23,7 +23,7 @@
       {
         "serviceName": "Audio",
         "fileName": "audio-api.json",
-        "serviceUri": "luna://com.webos.service.audio",
+        "serviceUri": "luna://com.webos.audio",
         "category": "media",
         "description": "볼륨 제어를 위한 메서드를 제공합니다.",
         "status": "active"
@@ -31,7 +31,7 @@
       {
         "serviceName": "BLE GATT",
         "fileName": "ble-gatt-api.json",
-        "serviceUri": "luna://com.webos.service.ble",
+        "serviceUri": "luna://com.webos.service.blegatt",
         "category": "network",
         "description": "BLE GATT(Bluetooth Low Energy Generic Attribute Profile) 기능을 위한 메서드를 제공합니다.",
         "status": "active",
@@ -57,7 +57,7 @@
       {
         "serviceName": "Database",
         "fileName": "database-api.json",
-        "serviceUri": "luna://com.webos.service.db",
+        "serviceUri": "luna://com.palm.db",
         "category": "system",
         "description": "앱이 지속적인 데이터를 저장할 수 있도록 합니다.",
         "status": "active"
@@ -82,7 +82,7 @@
       {
         "serviceName": "Keymanager3",
         "fileName": "keymanager3-api.json",
-        "serviceUri": "luna://com.webos.service.keymanager",
+        "serviceUri": "luna://com.webos.service.keymanager3",
         "category": "system",
         "description": "키의 생성 및 삭제, 암호화 및 복호화, 서명의 생성 및 검증 등을 위한 메서드를 제공합니다.",
         "status": "active",
@@ -91,7 +91,7 @@
       {
         "serviceName": "Magic Remote",
         "fileName": "magic-remote-api.json",
-        "serviceUri": "luna://com.webos.service.magicremote",
+        "serviceUri": "luna://com.webos.service.mrcu",
         "category": "device",
         "description": "센서 및 페어링과 같은 매직 리모컨 관련 기능을 제공합니다.",
         "status": "active"
