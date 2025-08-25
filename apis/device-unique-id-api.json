@@ -2,47 +2,24 @@
   "apiInfo": {
     "serviceName": "Device Unique ID",
     "serviceUri": "luna://com.webos.service.sm",
-    "category": "device",
-    "description": "디바이스 식별을 위한 메서드를 제공합니다.",
-    "version": "1.0",
-    "lastUpdated": "2024-01-15",
-    "compatibility": {
-      "webOSTV": {
-        "1.x": false,
-        "2.x": false,
-        "3.x": true,
-        "4.x": true,
-        "5.x": true,
-        "6.x": true,
-        "22": true,
-        "23": true,
-        "24": true,
-        "25": true
-      },
-      "simulator": true,
-      "emulator": {
-        "1.2": false,
-        "2.x": false,
-        "3.x": false,
-        "4.x": true,
-        "5.x": true,
-        "6.x": true
-      }
-    }
+    "category": "security",
+    "description": "webOS TV 디바이스 식별/인증을 위한 API를 제공합니다. webOS 3.0 이상의 플랫폼에서 사용 가능합니다.",
+    "version": "3.0",
+    "lastUpdated": "2025-01-18"
   },
   "methods": [
     {
-      "name": "getDeviceId",
-      "description": "디바이스의 고유 식별자를 조회합니다.",
-      "emulatorSupport": true,
+      "name": "deviceid/getIDs",
+      "description": "webOS TV에서 제공하는 디바이스 ID를 반환합니다. 현재는 LGUDID(LG Unique Device ID)를 지원합니다.\n\nLGUDID는 MAC을 시드로 사용하여 생성되지만, 무작위로 생성된 UUID도 함께 사용합니다. UUID 버전 5 스펙에 따라 생성되며, 네임스페이스 ID 대신 MAC을 이름으로, 무작위 생성된 UUID(버전 4)를 사용합니다.\n\n중요: 이 API를 사용하기 전에 사용자의 개인정보 사용에 대한 동의를 반드시 받아야 합니다.",
+      "emulatorSupport": false,
       "deprecated": false,
       "parameters": [
         {
           "name": "idType",
-          "required": false,
-          "type": "string",
-          "description": "요청할 ID 유형입니다.",
-          "enum": ["LGUDID"]
+          "required": true,
+          "type": "string[]",
+          "description": "ID 유형 배열. 현재는 \"LGUDID\"만 허용됩니다.",
+          "example": "[\"LGUDID\"]"
         }
       ],
       "returns": {
@@ -51,22 +28,80 @@
             "name": "returnValue",
             "type": "boolean",
             "required": true,
-            "description": "요청의 성공/실패를 나타냅니다."
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
           },
           {
-            "name": "deviceId",
+            "name": "idList",
+            "type": "object[]",
+            "required": true,
+            "description": "디바이스 ID 데이터(idType과 idValue) 배열",
+            "properties": [
+              {
+                "name": "idType",
+                "type": "string",
+                "required": true,
+                "description": "디바이스 ID 유형"
+              },
+              {
+                "name": "idValue",
+                "type": "string",
+                "required": true,
+                "description": "디바이스 ID 값"
+              }
+            ]
+          },
+          {
+            "name": "errorCode",
             "type": "string",
             "required": false,
-            "description": "디바이스의 고유 식별자입니다."
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
           }
         ]
       },
-      "errors": [],
+      "errors": [
+        {
+          "code": "ERR.001",
+          "message": "Invalid Parameters",
+          "description": "잘못된 매개변수"
+        },
+        {
+          "code": "ERR.002",
+          "message": "Security Manager Internal Error",
+          "description": "보안 관리자 내부 오류"
+        },
+        {
+          "code": "ERR.801",
+          "message": "Unsupported Device ID Type",
+          "description": "지원되지 않는 디바이스 ID 유형이 deviceId/getIDs API에 제공됨"
+        }
+      ],
       "examples": [
         {
-          "title": "디바이스 ID 조회",
-          "code": "var request = webOS.service.request('luna://com.webos.service.sm', {\n  method: 'getDeviceId',\n  parameters: {\n    idType: 'LGUDID'\n  },\n  onSuccess: function (inResponse) {\n    console.log('Device ID:', inResponse.deviceId);\n  },\n  onFailure: function (inError) {\n    console.log('Get device ID failed:', inError.errorText);\n  }\n});",
-          "language": "javascript"
+          "title": "시스템 ID 정보 가져오기",
+          "code": "var request = webOS.service.request('luna://com.webos.service.sm', {\n  method: 'deviceid/getIDs',\n  parameters: {\n    idType: ['LGUDID']\n  },\n  onSuccess: function (inResponse) {\n    console.log('Result: ' + JSON.stringify(inResponse));\n  },\n  onFailure: function (inError) {\n    console.log('Failed to get system ID information');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript",
+          "returns": {
+            "success": {
+              "returnValue": true,
+              "idList": [
+                {
+                  "idValue": "095f142a-xxxx-ac5d-xxxx-92c8be18xxxx",
+                  "idType": "LGUDID"
+                }
+              ]
+            },
+            "failure": {
+              "returnValue": false,
+              "errorCode": "ERR.001",
+              "errorText": "Invalid Parameters"
+            }
+          }
         }
       ]
     }
@@ -74,23 +109,52 @@
   "vscodeExtension": {
     "snippets": [
       {
-        "prefix": "webos-device-id",
+        "prefix": "webos-deviceid-getids",
         "body": [
           "webOS.service.request('luna://com.webos.service.sm', {",
-          "    method: 'getDeviceId',",
+          "    method: 'deviceid/getIDs',",
           "    parameters: {",
-          "        idType: '${1:LGUDID}'",
+          "        idType: ['LGUDID']",
           "    },",
           "    onSuccess: function (inResponse) {",
-          "        ${2:// Success handling}",
-          "        console.log('Device ID:', inResponse.deviceId);",
+          "        console.log('Result: ' + JSON.stringify(inResponse));",
+          "        ${1:// Success handling}",
           "    },",
           "    onFailure: function (inError) {",
-          "        ${3:// Error handling}",
+          "        console.log('Failed to get system ID information');",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
+          "        ${2:// Error handling}",
           "    }",
           "});"
         ],
-        "description": "디바이스 고유 ID 조회"
+        "description": "디바이스 ID 정보 가져오기"
+      }
+    ],
+    "completionItems": [
+      {
+        "label": "deviceid/getIDs",
+        "kind": "Method",
+        "documentation": "webOS TV에서 제공하는 디바이스 ID를 반환합니다. 현재는 LGUDID(LG Unique Device ID)를 지원합니다.",
+        "insertText": "deviceid/getIDs",
+        "detail": "Device Unique ID"
+      }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.sm'",
+        "checks": [
+          {
+            "field": "method",
+            "validValues": ["deviceid/getIDs"],
+            "required": true,
+            "type": "string"
+          },
+          {
+            "field": "parameters.idType",
+            "required": true,
+            "type": "array"
+          }
+        ]
       }
     ]
   }

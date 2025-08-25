@@ -3,32 +3,9 @@
     "serviceName": "Settings Service",
     "serviceUri": "luna://com.webos.service.settings",
     "category": "system",
-    "description": "시스템 설정 값을 조회하기 위한 메서드를 제공합니다.",
+    "description": "시스템 설정 값을 조회/설정하는 메서드를 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2024-01-15",
-    "compatibility": {
-      "webOSTV": {
-        "1.x": true,
-        "2.x": true,
-        "3.x": true,
-        "4.x": true,
-        "5.x": true,
-        "6.x": true,
-        "22": true,
-        "23": true,
-        "24": true,
-        "25": true
-      },
-      "simulator": true,
-      "emulator": {
-        "1.2": true,
-        "2.x": true,
-        "3.x": true,
-        "4.x": true,
-        "5.x": true,
-        "6.x": "partially"
-      }
-    }
+    "lastUpdated": "2025-01-18"
   },
   "methods": [
     {
@@ -37,41 +14,20 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        {
-          "name": "keys",
-          "required": true,
-          "type": "array",
-          "description": "조회할 설정 키들의 배열입니다."
-        },
-        {
-          "name": "subscribe",
-          "required": false,
-          "type": "boolean",
-          "description": "설정 변경을 구독할지 여부입니다.",
-          "defaultValue": false
-        }
+        { "name": "keys", "required": true, "type": "array", "description": "조회할 설정 키 배열" },
+        { "name": "subscribe", "required": false, "type": "boolean", "description": "설정 변경 구독 여부", "defaultValue": false }
       ],
       "returns": {
         "parameters": [
-          {
-            "name": "returnValue",
-            "type": "boolean",
-            "required": true,
-            "description": "요청의 성공/실패를 나타냅니다."
-          },
-          {
-            "name": "settings",
-            "type": "object",
-            "required": false,
-            "description": "조회된 설정 값들입니다."
-          }
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "settings", "type": "object", "required": false, "description": "조회된 설정 값들" }
         ]
       },
       "errors": [],
       "examples": [
         {
           "title": "시스템 설정 조회",
-          "code": "var request = webOS.service.request('luna://com.webos.service.settings', {\n  method: 'getSystemSettings',\n  parameters: {\n    keys: ['localeInfo', 'country']\n  },\n  onSuccess: function (inResponse) {\n    console.log('Settings:', inResponse.settings);\n    console.log('Locale:', inResponse.settings.localeInfo);\n    console.log('Country:', inResponse.settings.country);\n  },\n  onFailure: function (inError) {\n    console.log('Get settings failed:', inError.errorText);\n  }\n});",
+          "code": "webOS.service.request('luna://com.webos.service.settings', {\n  method: 'getSystemSettings',\n  parameters: { keys: ['localeInfo', 'country'] },\n  onSuccess: function (inResponse) {\n    console.log('Settings:', inResponse.settings);\n  },\n  onFailure: function (inError) {\n    console.log('Get settings failed:', inError.errorText);\n  }\n});",
           "language": "javascript"
         }
       ]
@@ -82,28 +38,18 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        {
-          "name": "settings",
-          "required": true,
-          "type": "object",
-          "description": "설정할 키-값 쌍들입니다."
-        }
+        { "name": "settings", "required": true, "type": "object", "description": "설정할 키-값 쌍" }
       ],
       "returns": {
         "parameters": [
-          {
-            "name": "returnValue",
-            "type": "boolean",
-            "required": true,
-            "description": "요청의 성공/실패를 나타냅니다."
-          }
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }
         ]
       },
       "errors": [],
       "examples": [
         {
           "title": "시스템 설정 변경",
-          "code": "var request = webOS.service.request('luna://com.webos.service.settings', {\n  method: 'setSystemSettings',\n  parameters: {\n    settings: {\n      'brightness': 80,\n      'contrast': 75\n    }\n  },\n  onSuccess: function (inResponse) {\n    console.log('Settings updated successfully');\n  },\n  onFailure: function (inError) {\n    console.log('Set settings failed:', inError.errorText);\n  }\n});",
+          "code": "webOS.service.request('luna://com.webos.service.settings', {\n  method: 'setSystemSettings',\n  parameters: { settings: { 'brightness': 80, 'contrast': 75 } },\n  onSuccess: function () {\n    console.log('Settings updated successfully');\n  }\n});",
           "language": "javascript"
         }
       ]
@@ -117,15 +63,11 @@
           "webOS.service.request('luna://com.webos.service.settings', {",
           "    method: 'getSystemSettings',",
           "    parameters: {",
-          "        keys: [${1:'localeInfo', 'country'}],",
+          "        keys: [${1:'localeInfo','country'}],",
           "        subscribe: ${2:false}",
           "    },",
           "    onSuccess: function (inResponse) {",
-          "        ${3:// Success handling}",
           "        console.log('Settings:', inResponse.settings);",
-          "    },",
-          "    onFailure: function (inError) {",
-          "        ${4:// Error handling}",
           "    }",
           "});"
         ],
@@ -141,15 +83,24 @@
           "            '${1:key}': ${2:value}",
           "        }",
           "    },",
-          "    onSuccess: function (inResponse) {",
-          "        ${3:// Success handling}",
-          "    },",
-          "    onFailure: function (inError) {",
-          "        ${4:// Error handling}",
+          "    onSuccess: function () {",
+          "        console.log('Settings updated');",
           "    }",
           "});"
         ],
         "description": "시스템 설정 변경"
+      }
+    ],
+    "completionItems": [
+      { "label": "getSystemSettings", "kind": "Method", "documentation": "시스템 설정 조회", "insertText": "getSystemSettings", "detail": "Settings Service" },
+      { "label": "setSystemSettings", "kind": "Method", "documentation": "시스템 설정 변경", "insertText": "setSystemSettings", "detail": "Settings Service" }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.settings'",
+        "checks": [
+          { "field": "method", "validValues": ["getSystemSettings", "setSystemSettings"], "required": true, "type": "string" }
+        ]
       }
     ]
   }

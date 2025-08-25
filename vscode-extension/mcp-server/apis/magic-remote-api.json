@@ -1,116 +1,163 @@
 {
   "apiInfo": {
     "serviceName": "Magic Remote",
-    "serviceUri": "luna://com.webos.service.magicremote",
+    "serviceUri": "luna://com.webos.service.mrcu",
     "category": "device",
-    "description": "센서 및 페어링과 같은 매직 리모컨 관련 기능을 제공합니다.",
+    "description": "매직 리모컨(Magic Remote)의 센서 이벤트와 상태 조회 기능을 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2024-01-15",
-    "compatibility": {
-      "webOSTV": {
-        "1.x": "partially",
-        "2.x": "partially",
-        "3.x": "partially",
-        "4.x": "partially",
-        "5.x": "partially",
-        "6.x": "partially",
-        "22": "partially",
-        "23": "partially",
-        "24": true,
-        "25": true
-      },
-      "simulator": "partially",
-      "emulator": {
-        "1.2": false,
-        "2.x": false,
-        "3.x": false,
-        "4.x": false,
-        "5.x": false,
-        "6.x": false
-      }
-    }
+    "lastUpdated": "2025-01-18"
   },
   "methods": [
     {
-      "name": "getSensorData",
-      "description": "매직 리모컨의 센서 데이터를 조회합니다.",
+      "name": "getAPIVersion",
+      "description": "MRCU API 버전을 조회합니다.",
       "emulatorSupport": false,
       "deprecated": false,
-      "parameters": [
-        {
-          "name": "subscribe",
-          "required": false,
-          "type": "boolean",
-          "description": "센서 데이터 변경을 구독할지 여부입니다.",
-          "defaultValue": false
-        }
-      ],
+      "parameters": [],
       "returns": {
         "parameters": [
-          {
-            "name": "returnValue",
-            "type": "boolean",
-            "required": true,
-            "description": "요청의 성공/실패를 나타냅니다."
-          },
-          {
-            "name": "gyroscope",
-            "type": "object",
-            "required": false,
-            "description": "자이로스코프 데이터입니다."
-          },
-          {
-            "name": "accelerometer",
-            "type": "object",
-            "required": false,
-            "description": "가속도계 데이터입니다."
-          }
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "version", "type": "string", "required": false, "description": "MRCU API 버전" },
+          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
+          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
         ]
       },
       "errors": [],
       "examples": [
         {
-          "title": "센서 데이터 조회",
-          "code": "var request = webOS.service.request('luna://com.webos.service.magicremote', {\n  method: 'getSensorData',\n  parameters: {\n    subscribe: true\n  },\n  onSuccess: function (inResponse) {\n    console.log('Gyroscope:', inResponse.gyroscope);\n    console.log('Accelerometer:', inResponse.accelerometer);\n  },\n  onFailure: function (inError) {\n    console.log('Get sensor data failed:', inError.errorText);\n  }\n});",
+          "title": "API 버전 조회",
+          "code": "var handle = webOS.service.request('luna://com.webos.service.mrcu', {\n  method: 'getAPIVersion',\n  parameters: {},\n  onSuccess: function (inResponse) {\n    console.log('Result:', JSON.stringify(inResponse));\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
           "language": "javascript"
         }
       ]
     },
     {
-      "name": "getPointerState",
-      "description": "매직 리모컨의 포인터 상태를 조회합니다.",
+      "name": "sensor2/getSensorEventData",
+      "description": "매직 리모컨의 센서 이벤트 데이터를 구독합니다.",
       "emulatorSupport": false,
       "deprecated": false,
-      "parameters": [
-        {
-          "name": "subscribe",
-          "required": false,
-          "type": "boolean",
-          "description": "포인터 상태 변경을 구독할지 여부입니다.",
-          "defaultValue": false
-        }
-      ],
+      "parameters": [],
       "returns": {
         "parameters": [
-          {
-            "name": "returnValue",
-            "type": "boolean",
-            "required": true,
-            "description": "요청의 성공/실패를 나타냅니다."
-          },
-          {
-            "name": "pointerVisible",
-            "type": "boolean",
-            "required": false,
-            "description": "포인터 가시성 상태입니다."
-          }
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "eventData", "type": "object", "required": false, "description": "센서 이벤트 데이터" },
+          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
+          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
         ]
       },
       "errors": [],
       "examples": [
         {
-          "title": "포인터 상태 조회",
-          "code": "var request = webOS.service.request('luna://com.webos.service.magicremote', {\n  method: 'getPointerState',\n  parameters: {\n    subscribe: true\n  },\n  onSuccess: function (inResponse) {\n    console.log('Pointer visible:', inResponse.pointerVisible);\n  },\n  onFailure: function (inError) {\n    console.log('Get pointer state failed:', inError.errorText);\n  }\n});",
+          "title": "센서 이벤트 구독",
+          "code": "var handle = webOS.service.request('luna://com.webos.service.mrcu', {\n  method: 'sensor2/getSensorEventData',\n  parameters: {},\n  onSuccess: function (inResponse) {\n    console.log('Sensor Data:', JSON.stringify(inResponse.eventData));\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "sensor2/cancelSensorDataSubscribe",
+      "description": "현재 구독 중인 센서 데이터 구독을 취소합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
+          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "센서 구독 취소",
+          "code": "var handle = webOS.service.request('luna://com.webos.service.mrcu', {\n  method: 'sensor2/cancelSensorDataSubscribe',\n  parameters: {},\n  onSuccess: function (inResponse) {\n    console.log('Subscription cancelled.');\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "sensor2/getSensorState",
+      "description": "리모컨의 모션 센서 현재 상태를 반환합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "isAlive", "type": "boolean", "required": false, "description": "모션 센서 활성 상태" },
+          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
+          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "센서 상태 조회",
+          "code": "var handle = webOS.service.request('luna://com.webos.service.mrcu', {\n  method: 'sensor2/getSensorState',\n  parameters: {},\n  onSuccess: function (inResponse) {\n    console.log('isAlive:', inResponse.isAlive);\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "sensor2/getSensorInterval",
+      "description": "모션 센서의 콜백 간격을 조회합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "interval", "type": "number", "required": false, "description": "현재 콜백 간격(ms)" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "콜백 간격 조회",
+          "code": "var handle = webOS.service.request('luna://com.webos.service.mrcu', {\n  method: 'sensor2/getSensorInterval',\n  parameters: {},\n  onSuccess: function (inResponse) {\n    console.log('Interval:', inResponse.interval);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "sensor2/setSensorInterval",
+      "description": "모션 센서의 콜백 간격을 설정합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        { "name": "interval", "required": true, "type": "number", "description": "설정할 콜백 간격(ms)" }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "콜백 간격 설정",
+          "code": "var handle = webOS.service.request('luna://com.webos.service.mrcu', {\n  method: 'sensor2/setSensorInterval',\n  parameters: { interval: 100 },\n  onSuccess: function (inResponse) {\n    console.log('Interval set to 100ms');\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "sensor2/resetQuaternion",
+      "description": "매직 리모컨의 쿼터니언 센서를 재설정합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "쿼터니언 리셋",
+          "code": "var handle = webOS.service.request('luna://com.webos.service.mrcu', {\n  method: 'sensor2/resetQuaternion',\n  parameters: {},\n  onSuccess: function (inResponse) {\n    console.log('Quaternion sensor reset.');\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
           "language": "javascript"
         }
       ]
@@ -119,23 +166,58 @@
   "vscodeExtension": {
     "snippets": [
       {
-        "prefix": "webos-magic-remote-sensor",
+        "prefix": "webos-mrcu-version",
         "body": [
-          "webOS.service.request('luna://com.webos.service.magicremote', {",
-          "    method: 'getSensorData',",
-          "    parameters: {",
-          "        subscribe: ${1:true}",
-          "    },",
+          "webOS.service.request('luna://com.webos.service.mrcu', {",
+          "    method: 'getAPIVersion',",
+          "    parameters: {},",
           "    onSuccess: function (inResponse) {",
-          "        ${2:// Success handling}",
-          "        console.log('Sensor data:', inResponse);",
-          "    },",
-          "    onFailure: function (inError) {",
-          "        ${3:// Error handling}",
+          "        console.log('MRCU version:', inResponse.version);",
           "    }",
           "});"
         ],
-        "description": "매직 리모컨 센서 데이터 조회"
+        "description": "MRCU API 버전 조회"
+      },
+      {
+        "prefix": "webos-mrcu-sensor-subscribe",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.mrcu', {",
+          "    method: 'sensor2/getSensorEventData',",
+          "    parameters: {},",
+          "    onSuccess: function (inResponse) {",
+          "        console.log('Sensor event:', inResponse.eventData);",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
+          "    }",
+          "});"
+        ],
+        "description": "MRCU 센서 이벤트 구독"
+      }
+    ],
+    "completionItems": [
+      { "label": "getAPIVersion", "kind": "Method", "documentation": "MRCU API 버전 조회", "insertText": "getAPIVersion", "detail": "Magic Remote" },
+      { "label": "sensor2/getSensorEventData", "kind": "Method", "documentation": "센서 이벤트 구독", "insertText": "sensor2/getSensorEventData", "detail": "Magic Remote" },
+      { "label": "sensor2/cancelSensorDataSubscribe", "kind": "Method", "documentation": "센서 구독 취소", "insertText": "sensor2/cancelSensorDataSubscribe", "detail": "Magic Remote" },
+      { "label": "sensor2/getSensorState", "kind": "Method", "documentation": "센서 상태 조회", "insertText": "sensor2/getSensorState", "detail": "Magic Remote" },
+      { "label": "sensor2/getSensorInterval", "kind": "Method", "documentation": "콜백 간격 조회", "insertText": "sensor2/getSensorInterval", "detail": "Magic Remote" },
+      { "label": "sensor2/setSensorInterval", "kind": "Method", "documentation": "콜백 간격 설정", "insertText": "sensor2/setSensorInterval", "detail": "Magic Remote" },
+      { "label": "sensor2/resetQuaternion", "kind": "Method", "documentation": "쿼터니언 리셋", "insertText": "sensor2/resetQuaternion", "detail": "Magic Remote" }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.mrcu'",
+        "checks": [
+          { "field": "method", "validValues": [
+            "getAPIVersion",
+            "sensor2/getSensorEventData",
+            "sensor2/cancelSensorDataSubscribe",
+            "sensor2/getSensorState",
+            "sensor2/getSensorInterval",
+            "sensor2/setSensorInterval",
+            "sensor2/resetQuaternion"
+          ], "required": true, "type": "string" }
+        ]
       }
     ]
   }
