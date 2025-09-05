@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { MCPClient } from '../services/mcp-client';
+import { FallbackProvider, FallbackAPIInfo } from '../utils/fallback-provider';
 
 export interface WebOSAPIInfo {
     serviceName: string;
@@ -26,6 +27,7 @@ export class WebOSAPIProvider {
     private statusBarItem: vscode.StatusBarItem;
     private isInitialized = false;
     private fallbackAPIs: Map<string, any> = new Map();
+    private isUsingFallback = false;
 
     constructor(private mcpClient: MCPClient) {
         this.statusBarItem = vscode.window.createStatusBarItem(
@@ -71,45 +73,95 @@ export class WebOSAPIProvider {
     }
 
     private async loadAPIs(): Promise<void> {
+        console.log('🔄 Starting API loading with enhanced fallback chain...');
+        this.isUsingFallback = false;
+
         try {
-            console.log('Calling MCP tool: webos_list_apis');
-            // Get all APIs
+            // 1. Try MCP Server first
+            console.log('📡 Attempting to load APIs from MCP server...');
             const response = await this.mcpClient.callTool('webos_list_apis');
-            console.log('MCP response received:', response);
+            console.log('📡 MCP response received:', response);
             
             this.apis = this.parseAPIListResponse(response);
-            console.log(`Parsed ${this.apis.length} APIs:`, this.apis);
+            console.log(`📡 Parsed ${this.apis.length} APIs from MCP:`, this.apis);
             
-            // Update status bar immediately when APIs are loaded from MCP
             if (this.apis.length > 0) {
-                this.statusBarItem.text = `$(rocket) webOS TV (${this.apis.length} APIs)`;
-                this.statusBarItem.tooltip = `webOS TV API Assistant - ${this.apis.length} APIs loaded from MCP server`;
                 console.log(`✅ Successfully loaded ${this.apis.length} APIs from MCP server`);
+                this.updateStatusBarSuccess(this.apis.length, 'MCP');
+                
+                // Cache frequently used methods for faster completion
+                await this.cacheCommonMethods();
+                console.log('📋 Common methods cached');
+                
+                // Load fallback APIs for emergency use
+                await this.loadFallbackAPIs();
+                console.log('📦 Fallback APIs loaded for emergency use');
+                return;
             }
+        } catch (mcpError) {
+            console.warn('⚠️ MCP server failed:', mcpError);
+        }
 
-            // If no APIs were loaded from MCP, try loading from local files
-            if (this.apis.length === 0) {
-                console.log('No APIs from MCP, trying local files...');
-                await this.loadAPIsFromLocalFiles();
+        try {
+            // 2. Try local API files as secondary fallback
+            console.log('📁 MCP failed, trying local API files...');
+            await this.loadAPIsFromLocalFiles();
+            
+            if (this.apis.length > 0) {
+                console.log(`✅ Successfully loaded ${this.apis.length} APIs from local files`);
+                this.updateStatusBarSuccess(this.apis.length, 'Local Files');
+                this.isUsingFallback = true;
+                
+                // Load fallback APIs for additional coverage
+                await this.loadFallbackAPIs();
+                return;
             }
+        } catch (localError) {
+            console.warn('⚠️ Local files also failed:', localError);
+        }
 
-            // Cache frequently used methods for faster completion
-            await this.cacheCommonMethods();
-            console.log('Common methods cached');
-
-            // Load fallback APIs from local files
-            await this.loadFallbackAPIs();
-            console.log('Fallback APIs loaded');
-        } catch (error) {
-            console.error('Failed to load APIs via MCP, trying local files:', error);
-            // Fallback to local files
-            try {
-                await this.loadAPIsFromLocalFiles();
-                console.log('Successfully loaded APIs from local files');
-            } catch (localError) {
-                console.error('Failed to load APIs from local files:', localError);
-                throw error;
-            }
+        try {
+            // 3. Use minimal fallback provider as final safety net
+            console.log('📦 Using minimal fallback provider as final safety net...');
+            const fallbackAPIs = FallbackProvider.getMinimalAPIList();
+            this.apis = fallbackAPIs.map(api => ({
+                serviceName: api.serviceName,
+                serviceUri: api.serviceUri,
+                category: api.category,
+                description: api.description,
+                status: api.status
+            }));
+            
+            console.log(`✅ Loaded ${this.apis.length} APIs from minimal fallback provider`);
+            this.updateStatusBarFallback(this.apis.length);
+            this.isUsingFallback = true;
+            
+            // Show fallback notification to user
+            FallbackProvider.showFallbackNotification();
+            
+        } catch (fallbackError) {
+            console.error('❌ Even fallback provider failed:', fallbackError);
+            
+            // Absolute emergency: provide at least one API
+            this.apis = [{
+                serviceName: 'Audio',
+                serviceUri: 'luna://com.webos.service.audio',
+                category: 'media',
+                description: 'Basic audio control (Emergency fallback)',
+                status: 'active'
+            }];
+            
+            this.updateStatusBarEmergency();
+            this.isUsingFallback = true;
+            
+            vscode.window.showErrorMessage(
+                'webOS TV API Assistant: All data sources failed. Using emergency mode.',
+                'Retry'
+            ).then(selection => {
+                if (selection === 'Retry') {
+                    this.refreshAPIs();
+                }
+            });
         }
     }
 
@@ -414,6 +466,55 @@ export class WebOSAPIProvider {
 
     getMethods(): WebOSMethod[] {
         return this.methods;
+    }
+
+    /**
+     * 특정 서비스 URI에 대한 메서드 정보를 로컬 API 파일에서 가져오기
+     */
+    getMethodFromLocalFile(serviceUri: string, methodName: string): any | null {
+        try {
+            const extensionPath = vscode.extensions.getExtension('webos-tv-developer.webos-tv-api-assistant')?.extensionPath;
+            if (!extensionPath) {
+                return null;
+            }
+
+            // API 파일들에서 해당 서비스 URI 찾기
+            const apiFiles = [
+                'audio-api.json',
+                'connection-manager-api.json',
+                'database-api.json',
+                'device-unique-id-api.json',
+                'drm-api.json',
+                'keymanager3-api.json',
+                'magic-remote-api.json',
+                'media-database-api.json',
+                'settings-service-api.json',
+                'system-service-api.json',
+                'tv-device-information-api.json'
+            ];
+
+            for (const apiFile of apiFiles) {
+                const apiFilePath = path.join(extensionPath, 'mcp-server', 'apis', apiFile);
+                if (fs.existsSync(apiFilePath)) {
+                    const apiContent = fs.readFileSync(apiFilePath, 'utf8');
+                    const apiData = JSON.parse(apiContent);
+                    
+                    if (apiData.apiInfo?.serviceUri === serviceUri && apiData.methods) {
+                        const method = apiData.methods.find((m: any) => m.name === methodName);
+                        if (method) {
+                            console.log(`✅ Found method "${methodName}" in local file: ${apiFile}`);
+                            return method;
+                        }
+                    }
+                }
+            }
+            
+            console.log(`❌ Method "${methodName}" not found in local files for URI: ${serviceUri}`);
+            return null;
+        } catch (error) {
+            console.error('Error reading local API file:', error);
+            return null;
+        }
     }
 
     isReady(): boolean {
@@ -856,5 +957,62 @@ export class WebOSAPIProvider {
 
     public listFallbackAPIs(): string[] {
         return Array.from(this.fallbackAPIs.keys());
+    }
+
+    /**
+     * 상태바 업데이트 메서드들
+     */
+    private updateStatusBarSuccess(apiCount: number, source: string): void {
+        this.statusBarItem.text = `$(rocket) webOS TV (${apiCount} APIs)`;
+        this.statusBarItem.tooltip = `webOS TV API Assistant - ${apiCount} APIs loaded from ${source}`;
+        this.statusBarItem.color = undefined; // 기본 색상
+    }
+
+    private updateStatusBarFallback(apiCount: number): void {
+        this.statusBarItem.text = `$(warning) webOS TV (${apiCount} APIs)`;
+        this.statusBarItem.tooltip = `webOS TV API Assistant - Fallback mode\n${apiCount} APIs available\nClick to retry full connection`;
+        this.statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningBackground');
+        this.statusBarItem.command = 'webos-api.refreshAPIs';
+    }
+
+    private updateStatusBarEmergency(): void {
+        this.statusBarItem.text = `$(error) webOS TV (Emergency)`;
+        this.statusBarItem.tooltip = `webOS TV API Assistant - Emergency mode\nMinimal functionality only\nClick to retry`;
+        this.statusBarItem.color = new vscode.ThemeColor('statusBarItem.errorBackground');
+        this.statusBarItem.command = 'webos-api.refreshAPIs';
+    }
+
+    /**
+     * Fallback 모드 확인
+     */
+    public isInFallbackMode(): boolean {
+        return this.isUsingFallback;
+    }
+
+    /**
+     * Fallback 메서드 제공 (강화된 버전)
+     */
+    public getFallbackMethodsEnhanced(serviceName: string): any[] {
+        console.log(`🔍 Getting enhanced fallback methods for service: "${serviceName}"`);
+        
+        // 1. 기존 파일 기반 fallback 시도
+        const fileMethods = this.getFallbackMethods(serviceName);
+        if (fileMethods.length > 0) {
+            console.log(`✅ Found ${fileMethods.length} file-based methods for ${serviceName}`);
+            return fileMethods;
+        }
+
+        // 2. 최소 fallback provider 사용
+        const minimalMethods = FallbackProvider.getMinimalMethods(serviceName);
+        console.log(`📦 Using ${minimalMethods.length} minimal fallback methods for ${serviceName}`);
+        
+        return minimalMethods.map((method: any) => ({
+            name: method.name,
+            description: method.description + ' (Minimal fallback)',
+            deprecated: method.deprecated || false,
+            parameters: method.parameters || [],
+            returns: undefined,
+            examples: []
+        }));
     }
 }

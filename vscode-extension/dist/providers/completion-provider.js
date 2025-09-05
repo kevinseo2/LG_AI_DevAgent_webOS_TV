@@ -35,6 +35,9 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebOSCompletionProvider = void 0;
 const vscode = __importStar(require("vscode"));
+const uri_normalizer_1 = require("../utils/uri-normalizer");
+const smart_completion_1 = require("../utils/smart-completion");
+const fallback_provider_1 = require("../utils/fallback-provider");
 class WebOSCompletionProvider {
     constructor(apiProvider) {
         this.apiProvider = apiProvider;
@@ -99,7 +102,7 @@ class WebOSCompletionProvider {
                 console.log(`➕ Added ${webosCompletions.length} webOS service completions`);
             }
             // More aggressive Luna URI detection (including placeholder detection)
-            if (this.isCompletingServiceURI(linePrefix) ||
+            if (this.isCompletingServiceURI(linePrefix, document, position) ||
                 linePrefix.includes("'l") || linePrefix.includes('"l') ||
                 linePrefix.includes("'luna") || linePrefix.includes('"luna') ||
                 linePrefix.includes("service.name") || linePrefix.includes("service.uri") || // Add placeholder detection
@@ -131,9 +134,16 @@ class WebOSCompletionProvider {
             // Add webOS completions only for non-method contexts
             if (completions.length === 0 && !this.isCompletingMethod(linePrefix, document, position)) {
                 console.log('🔧 No specific completions found, adding default webOS items');
-                // Always provide webOS service request
-                const webosRequest = new vscode.CompletionItem('webOS.service.request', vscode.CompletionItemKind.Snippet);
-                webosRequest.insertText = new vscode.SnippetString(`webOS.service.request('\${1:luna://service.name}', {
+                // Check if we're in fallback mode and provide appropriate snippets
+                if (this.apiProvider.isInFallbackMode()) {
+                    console.log('📦 Adding fallback snippets');
+                    const fallbackSnippets = fallback_provider_1.FallbackProvider.createBasicSnippets();
+                    completions.push(...fallbackSnippets);
+                }
+                else {
+                    // Always provide webOS service request
+                    const webosRequest = new vscode.CompletionItem('webOS.service.request', vscode.CompletionItemKind.Snippet);
+                    webosRequest.insertText = new vscode.SnippetString(`webOS.service.request('\${1:luna://service.name}', {
     method: '\${2:methodName}',
     parameters: {
         \${3:// parameters}
@@ -147,14 +157,21 @@ class WebOSCompletionProvider {
         console.log('Failed:', inError.errorText);
     }
 });`);
-                webosRequest.documentation = new vscode.MarkdownString('🚀 **webOS TV Luna Service API call**');
-                webosRequest.detail = 'webOS TV API Assistant';
-                webosRequest.sortText = '0000_webos';
-                completions.push(webosRequest);
-                // Add debug completion
-                const debugCompletion = new vscode.CompletionItem('🚀 webOS TV API Assistant is active!', vscode.CompletionItemKind.Text);
-                debugCompletion.detail = 'Debug: Extension is working';
-                debugCompletion.documentation = new vscode.MarkdownString('✅ If you see this, the webOS TV API Assistant extension is active and working.');
+                    webosRequest.documentation = new vscode.MarkdownString('🚀 **webOS TV Luna Service API call**');
+                    webosRequest.detail = 'webOS TV API Assistant';
+                    webosRequest.sortText = '0000_webos';
+                    completions.push(webosRequest);
+                }
+                // Add debug completion with fallback mode indication
+                const debugCompletion = new vscode.CompletionItem(this.apiProvider.isInFallbackMode() ?
+                    '⚠️ webOS TV API Assistant (Fallback Mode)' :
+                    '🚀 webOS TV API Assistant is active!', vscode.CompletionItemKind.Text);
+                debugCompletion.detail = this.apiProvider.isInFallbackMode() ?
+                    'Debug: Extension in fallback mode' :
+                    'Debug: Extension is working';
+                debugCompletion.documentation = new vscode.MarkdownString(this.apiProvider.isInFallbackMode() ?
+                    '⚠️ Extension is running in fallback mode. Some features may be limited.' :
+                    '✅ If you see this, the webOS TV API Assistant extension is active and working.');
                 debugCompletion.sortText = 'zzz_debug';
                 completions.push(debugCompletion);
             }
@@ -204,23 +221,65 @@ class WebOSCompletionProvider {
             linePrefix.includes('webOS.service.request') ||
             linePrefix.includes('webOS.service.call');
     }
-    isInWebOSServiceContext(linePrefix) {
-        return linePrefix.includes('webOS.service.request') ||
-            linePrefix.includes('webOS.service.call');
+    isInWebOSServiceContext(linePrefix, document, position) {
+        // 현재 라인에서 webOS 컨텍스트 확인
+        if (linePrefix.includes('webOS.service.request') ||
+            linePrefix.includes('webOS.service.call')) {
+            return true;
+        }
+        // 전체 라인에서 webOS 컨텍스트 확인 (여러 줄 상황)
+        if (document && position) {
+            const fullLine = document.lineAt(position.line).text;
+            if (fullLine.includes('webOS.service.request') ||
+                fullLine.includes('webOS.service.call')) {
+                return true;
+            }
+            // 이전 라인들도 확인 (여러 줄에 걸친 webOS 호출)
+            for (let i = Math.max(0, position.line - 5); i < position.line; i++) {
+                const line = document.lineAt(i).text;
+                if (line.includes('webOS.service.request') ||
+                    line.includes('webOS.service.call')) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
-    isCompletingServiceURI(linePrefix) {
+    isCompletingServiceURI(linePrefix, document, position) {
         console.log('Checking if completing service URI for:', linePrefix);
         // First, check if we're definitely in a webOS.service context
-        const inWebOSContext = this.isInWebOSServiceContext(linePrefix);
+        const inWebOSContext = this.isInWebOSServiceContext(linePrefix, document, position);
         // Check for complete luna:// URIs (including placeholders)
         if (linePrefix.includes('luna://')) {
             console.log('Found complete luna:// in line prefix');
             return true;
         }
-        // Check for placeholder service URIs
-        if (linePrefix.includes('service.uri') || linePrefix.includes('service.name') || linePrefix.includes('service.')) {
+        // Check for placeholder service URIs (더 정확한 검사)
+        if (linePrefix.match(/['"]service\.uri['"]?$/) ||
+            linePrefix.match(/['"]service\.name['"]?$/) ||
+            linePrefix.match(/['"]service\.['"]?$/)) {
             console.log('Found service URI placeholder in line prefix');
             return true;
+        }
+        // 추가: 여러 줄에 걸친 webOS.service.request에서 service. 패턴 감지
+        if (inWebOSContext && linePrefix.match(/['"]service\.[^'"]*$/)) {
+            console.log('Found service placeholder in multiline webOS context');
+            return true;
+        }
+        // 추가: 현재 상황 감지 - 따옴표 안에서 service.uri 타이핑 중
+        if (linePrefix.match(/['"]service\.uri['"]?$/) ||
+            linePrefix.match(/['"]service\.uri['"]?,\s*$/) ||
+            linePrefix.match(/['"]service\.uri['"]?\s*,\s*\/\/.*$/)) {
+            console.log('Found service.uri pattern in quotes');
+            return true;
+        }
+        // 추가: 전체 라인에서 service.uri 패턴 확인
+        if (document && position) {
+            const fullLine = document.lineAt(position.line).text;
+            if (fullLine.includes("'service.uri'") || fullLine.includes('"service.uri"')) {
+                console.log('Found service.uri in full line analysis');
+                return true;
+            }
         }
         // Check if we're typing luna:// after quotes in webOS context
         if (inWebOSContext && (linePrefix.includes('"luna://') || linePrefix.includes("'luna://"))) {
@@ -298,14 +357,13 @@ class WebOSCompletionProvider {
                     complete: match[0].endsWith(quote),
                     fullMatch: match[0]
                 });
-                // Check if cursor is within the method property area (including the property name)
-                if (cursorPos >= methodStartPos && cursorPos <= contentEndPos) {
-                    console.log('✅ Cursor is within method property area:', content);
-                    return true;
-                }
-                // Also check specifically within the quoted content
+                // Check if cursor is within the quoted content of method property
                 if (cursorPos >= contentStartPos && cursorPos <= contentEndPos) {
                     console.log('✅ Cursor is within method property content:', content);
+                    // 추가 검증: 이상한 문자열 패턴 방지
+                    if (content.includes('methodName') && content !== 'methodName') {
+                        console.log('⚠️ Detected corrupted method content, treating as method completion:', content);
+                    }
                     return true;
                 }
             }
@@ -370,184 +428,14 @@ class WebOSCompletionProvider {
         completions.push(webosCompletion);
         return completions;
     }
+    // Legacy method - deprecated, use SmartCompletionEngine instead
     getSmartCompletion(fullText, linePrefix, position, document) {
-        console.log('🔍 Smart completion analysis:', { fullText, linePrefix, position: position.character });
-        // Get the full line to better analyze the context
-        const fullLine = document.lineAt(position.line).text;
-        const cursorPos = position.character;
-        console.log('📄 Full line analysis:', { fullLine, cursorPos });
-        // Find quoted string that contains the cursor position (including incomplete strings)
-        const quotedRegex = /(['"])([^'"]*?)(?:\1|$)/g; // Allow incomplete strings without closing quote
-        let match;
-        while ((match = quotedRegex.exec(fullLine)) !== null) {
-            const quote = match[1];
-            const content = match[2];
-            const startPos = match.index + 1; // after opening quote
-            let endPos;
-            // Check if string is complete (has closing quote)
-            if (match[0].endsWith(quote)) {
-                endPos = match.index + match[0].length - 1; // before closing quote
-            }
-            else {
-                endPos = match.index + match[0].length; // end of content
-            }
-            console.log('🔍 Checking quoted string:', { startPos, endPos, content, cursorPos, complete: match[0].endsWith(quote) });
-            // Check if cursor is within this quoted string
-            if (cursorPos >= startPos && cursorPos <= endPos) {
-                console.log('🎯 Cursor is within quoted string:', content);
-                // Check if this content should be replaced
-                if (content && (content.includes('luna://') ||
-                    content.includes('service.uri') ||
-                    content.includes('service.name') || // new placeholder
-                    content.includes('methodName') ||
-                    content.includes('.uri') ||
-                    content.includes('.name') ||
-                    content.includes('service.') ||
-                    content === 'getVolume' ||
-                    content.includes('com.webos') ||
-                    content.startsWith('l') || // partial luna typing
-                    content.includes('audio') || // partial service names
-                    content.includes('system') ||
-                    content.length > 0 // replace any non-empty content within quotes
-                )) {
-                    const range = new vscode.Range(new vscode.Position(position.line, startPos), new vscode.Position(position.line, endPos));
-                    console.log('📝 Will replace quoted content:', content, 'with:', fullText, 'at range:', range);
-                    return {
-                        insertText: '',
-                        additionalTextEdits: [vscode.TextEdit.replace(range, fullText)]
-                    };
-                }
-            }
-        }
-        // Fallback: Look for quoted strings at end of linePrefix (original logic)
-        const quotedMatch = linePrefix.match(/(['"])([^'"]*?)$/);
-        if (quotedMatch) {
-            const quote = quotedMatch[1];
-            const existing = quotedMatch[2];
-            console.log('🎯 Found quoted content at end:', { quote, existing });
-            // Check if existing content should be replaced
-            if (existing && (existing.includes('luna://') ||
-                existing.includes('service.uri') ||
-                existing.includes('service.name') || // new placeholder
-                existing.includes('methodName') ||
-                existing.startsWith('l') || // partial luna typing
-                existing.includes('.uri') ||
-                existing.includes('.name') ||
-                existing.includes('service.') ||
-                existing === 'getVolume' || // default method name
-                existing === 'audio' || // partial service name
-                existing.includes('com.webos') // partial service URI
-            )) {
-                const startPos = position.character - existing.length;
-                const range = new vscode.Range(new vscode.Position(position.line, startPos), new vscode.Position(position.line, position.character));
-                console.log('📝 Will replace existing content:', existing, 'with:', fullText, 'at range:', range);
-                return {
-                    insertText: '',
-                    additionalTextEdits: [vscode.TextEdit.replace(range, fullText)]
-                };
-            }
-        }
-        // Check for other patterns like partial typing without quotes
-        const partialLunaMatch = linePrefix.match(/(luna:\/\/[^\s'"]*?)$/);
-        if (partialLunaMatch) {
-            const partialURI = partialLunaMatch[1];
-            console.log('🔍 Found partial luna URI without quotes:', partialURI);
-            if (fullText.startsWith(partialURI)) {
-                // Replace the partial URI
-                const startPos = linePrefix.lastIndexOf(partialURI);
-                if (startPos !== -1) {
-                    const range = new vscode.Range(new vscode.Position(position.line, startPos), new vscode.Position(position.line, startPos + partialURI.length));
-                    return {
-                        insertText: '',
-                        additionalTextEdits: [vscode.TextEdit.replace(range, fullText)]
-                    };
-                }
-            }
-        }
-        // If no existing URI, return full text
+        console.log('⚠️ Using deprecated getSmartCompletion - consider using SmartCompletionEngine');
         return { insertText: fullText };
     }
+    // Legacy method - deprecated, use SmartCompletionEngine instead
     getSmartMethodCompletion(methodName, linePrefix, position, document) {
-        console.log('🔍 Smart method completion analysis:', { methodName, linePrefix, position: position.character });
-        console.log('🚀 getSmartMethodCompletion called with:', { methodName, linePrefix });
-        // Get the full line to better analyze the context
-        const fullLine = document.lineAt(position.line).text;
-        const cursorPos = position.character;
-        console.log('📄 Full line method analysis:', { fullLine, cursorPos });
-        // Find method property quoted string that contains the cursor position (including incomplete strings)
-        const methodRegex = /\bmethod\s*:\s*(['"])([^'"]*?)(?:\1|$)/g;
-        let match;
-        while ((match = methodRegex.exec(fullLine)) !== null) {
-            const quote = match[1];
-            const content = match[2];
-            const quoteStartPos = match.index + match[0].indexOf(quote);
-            const contentStartPos = quoteStartPos + 1; // after opening quote
-            let contentEndPos;
-            // Check if string is complete (has closing quote)
-            if (match[0].endsWith(quote)) {
-                contentEndPos = match.index + match[0].length - 1; // before closing quote
-            }
-            else {
-                contentEndPos = match.index + match[0].length; // end of content
-            }
-            console.log('🔍 Checking method quoted string:', {
-                contentStartPos, contentEndPos, content, cursorPos,
-                complete: match[0].endsWith(quote),
-                fullMatch: match[0]
-            });
-            // Check if cursor is within this method property content
-            if (cursorPos >= contentStartPos && cursorPos <= contentEndPos) {
-                console.log('🎯 Cursor is within method property, replacing:', content, 'with:', methodName);
-                // More precise range calculation - only replace the actual content, not the quotes
-                const range = new vscode.Range(new vscode.Position(position.line, contentStartPos), new vscode.Position(position.line, contentEndPos));
-                console.log('🎯 Range for replacement:', range, 'replacing content:', content);
-                return {
-                    insertText: '',
-                    additionalTextEdits: [vscode.TextEdit.replace(range, methodName)]
-                };
-            }
-        }
-        // Fallback: Look for quoted method values or placeholders at end of linePrefix
-        const quotedMatch = linePrefix.match(/(['"])([^'"]*?)$/);
-        if (quotedMatch) {
-            const quote = quotedMatch[1];
-            const existing = quotedMatch[2];
-            console.log('🎯 Found quoted method content at end:', { quote, existing });
-            // Check if existing content should be replaced (methodName placeholder, getVolume default, partial method names, etc.)
-            if (existing && (existing === 'methodName' ||
-                existing === 'getVolume' ||
-                existing === 'getPointerStatemethodName' || // Fix for the specific bug mentioned
-                existing.includes('methodName') ||
-                existing.includes('method') ||
-                existing.includes('generatedKey') || // Fix for generatedKeymethodName
-                existing.match(/[a-z]+methodName$/i) || // Fix patterns like "someStringmethodName"
-                existing.startsWith('get') ||
-                existing.startsWith('set') ||
-                existing.length > 0 // replace any existing method name
-            )) {
-                const startPos = position.character - existing.length;
-                const range = new vscode.Range(new vscode.Position(position.line, startPos), new vscode.Position(position.line, position.character));
-                console.log('📝 Will replace existing method:', existing, 'with:', methodName, 'at range:', range);
-                return {
-                    insertText: '',
-                    additionalTextEdits: [vscode.TextEdit.replace(range, methodName)]
-                };
-            }
-        }
-        // Check for method pattern without quotes
-        const methodMatch = linePrefix.match(/\bmethod\s*:\s*([^'",\s]+)$/);
-        if (methodMatch) {
-            const existing = methodMatch[1];
-            const startPos = position.character - existing.length;
-            const range = new vscode.Range(new vscode.Position(position.line, startPos), new vscode.Position(position.line, position.character));
-            console.log('📝 Will replace unquoted method:', existing, 'with:', methodName);
-            return {
-                insertText: '',
-                additionalTextEdits: [vscode.TextEdit.replace(range, methodName)]
-            };
-        }
-        // If no replacement needed, just insert
-        console.log('📝 Simple method insertion:', methodName);
+        console.log('⚠️ Using deprecated getSmartMethodCompletion - consider using SmartCompletionEngine');
         return { insertText: methodName };
     }
     getServiceURICompletions(linePrefix, position, document) {
@@ -565,30 +453,33 @@ class WebOSCompletionProvider {
         }
         const apis = this.apiProvider.getAPIs();
         console.log(`Found ${apis.length} APIs for completion`);
-        // If no APIs available, try file-based fallback first
+        // If no APIs available, use enhanced fallback system
         if (apis.length === 0) {
-            console.log('🔄 No APIs from MCP, trying file-based fallback...');
-            // Try to get APIs from local file fallback
+            console.log('🔄 No APIs from provider, using enhanced fallback system...');
+            // Try file-based fallback first
             const fallbackAPIList = this.apiProvider.listFallbackAPIs();
             console.log(`📁 Found ${fallbackAPIList.length} file-based fallback APIs:`, fallbackAPIList);
             if (fallbackAPIList.length > 0) {
                 // Create completions from file-based fallback APIs
                 for (const serviceName of fallbackAPIList) {
-                    // Get the service URI from the service name mapping
                     const serviceURI = this.getServiceURIFromName(serviceName);
                     if (serviceURI) {
                         const completion = new vscode.CompletionItem(serviceURI, vscode.CompletionItemKind.Value);
-                        completion.detail = `${serviceName} (file-based)`;
+                        completion.detail = `${serviceName} (file-based fallback)`;
                         completion.documentation = new vscode.MarkdownString(`**${serviceName}**\\n\\nwebOS TV Luna Service from local API files\\n\\n📋 **URI:** \`${serviceURI}\`\\n\\n*Note: Loaded from local API files since MCP server is unavailable.*`);
                         // Use smart completion to avoid duplication
                         if (linePrefix && position && document) {
-                            const smartCompletion = this.getSmartCompletion(serviceURI, linePrefix, position, document);
-                            if (smartCompletion.additionalTextEdits && smartCompletion.additionalTextEdits.length > 0) {
-                                completion.insertText = smartCompletion.insertText;
+                            const context = {
+                                document,
+                                position,
+                                linePrefix,
+                                fullLine: document.lineAt(position.line).text,
+                                cursorPos: position.character
+                            };
+                            const smartCompletion = smart_completion_1.SmartCompletionEngine.getServiceURICompletion(serviceURI, context);
+                            completion.insertText = smartCompletion.insertText;
+                            if (smartCompletion.additionalTextEdits) {
                                 completion.additionalTextEdits = smartCompletion.additionalTextEdits;
-                            }
-                            else {
-                                completion.insertText = smartCompletion.insertText;
                             }
                         }
                         else {
@@ -602,47 +493,53 @@ class WebOSCompletionProvider {
                 console.log(`📁 Generated ${completions.length} file-based URI completions`);
                 return completions;
             }
-            else {
-                console.log('⚠️ No file-based fallback APIs found, using minimal hardcoded fallback');
-                // Only as a last resort, provide minimal hardcoded fallback
-                const minimalFallback = [
-                    { uri: 'luna://com.webos.service.audio', name: 'Audio Service' },
-                    { uri: 'luna://com.palm.activitymanager', name: 'Activity Manager' },
-                    { uri: 'luna://com.webos.service.settings', name: 'Settings Service' }
-                ];
-                for (const fallback of minimalFallback) {
-                    const completion = new vscode.CompletionItem(fallback.uri, vscode.CompletionItemKind.Value);
-                    completion.detail = `${fallback.name} (minimal fallback)`;
-                    completion.documentation = new vscode.MarkdownString(`**${fallback.name}**\\n\\nBasic webOS TV service\\n\\n*Minimal fallback - API data not available*`);
-                    completion.insertText = fallback.uri;
-                    completion.sortText = `minimal_fallback_${fallback.uri}`;
-                    completions.push(completion);
+            // Use minimal fallback provider as final safety net
+            console.log('📦 Using minimal fallback provider for URI completions');
+            const fallbackCompletions = fallback_provider_1.FallbackProvider.createAPICompletionItems();
+            // Apply smart completion to fallback items
+            if (linePrefix && position && document) {
+                const context = {
+                    document,
+                    position,
+                    linePrefix,
+                    fullLine: document.lineAt(position.line).text,
+                    cursorPos: position.character
+                };
+                for (const completion of fallbackCompletions) {
+                    const smartCompletion = smart_completion_1.SmartCompletionEngine.getServiceURICompletion(completion.insertText, context);
+                    completion.insertText = smartCompletion.insertText;
+                    if (smartCompletion.additionalTextEdits) {
+                        completion.additionalTextEdits = smartCompletion.additionalTextEdits;
+                    }
                 }
-                return completions;
             }
+            console.log(`📦 Generated ${fallbackCompletions.length} minimal fallback URI completions`);
+            return fallbackCompletions;
         }
         // Create completions from API data
         for (const api of apis) {
-            const completion = new vscode.CompletionItem(api.serviceUri, vscode.CompletionItemKind.Value);
-            completion.detail = `${api.serviceName} (${api.category})`;
-            completion.documentation = new vscode.MarkdownString(`**${api.serviceName}** (${api.category})\\n\\n${api.description || 'webOS TV Luna Service'}\\n\\n📋 **URI:** \`${api.serviceUri}\``);
+            // URI 정규화 적용
+            const normalizedUri = uri_normalizer_1.URINormalizer.normalizeURI(api.serviceUri) || api.serviceUri;
+            const completion = new vscode.CompletionItem(normalizedUri, vscode.CompletionItemKind.Value);
+            completion.detail = `${api.serviceName} (${api.category}) - Normalized`;
+            completion.documentation = new vscode.MarkdownString(`**${api.serviceName}** (${api.category})\\n\\n${api.description || 'webOS TV Luna Service'}\\n\\n📋 **Standard URI:** \`${normalizedUri}\`${api.serviceUri !== normalizedUri ? `\\n🔄 **Original URI:** \`${api.serviceUri}\`` : ''}`);
             // Use smart completion to avoid duplication
             if (linePrefix && position && document) {
-                const smartCompletion = this.getSmartCompletion(api.serviceUri, linePrefix, position, document);
-                if (smartCompletion.additionalTextEdits && smartCompletion.additionalTextEdits.length > 0) {
-                    // Use range-based replacement for more precise control
-                    const replaceRange = smartCompletion.additionalTextEdits[0].range;
-                    completion.insertText = api.serviceUri;
-                    completion.range = replaceRange;
-                    console.log('🎯 Using range-based replacement:', { replaceRange, uri: api.serviceUri });
-                }
-                else {
-                    completion.insertText = smartCompletion.insertText;
+                const context = {
+                    document,
+                    position,
+                    linePrefix,
+                    fullLine: document.lineAt(position.line).text,
+                    cursorPos: position.character
+                };
+                const smartCompletion = smart_completion_1.SmartCompletionEngine.getServiceURICompletion(normalizedUri, context);
+                completion.insertText = smartCompletion.insertText;
+                if (smartCompletion.additionalTextEdits) {
                     completion.additionalTextEdits = smartCompletion.additionalTextEdits;
                 }
             }
             else {
-                completion.insertText = api.serviceUri;
+                completion.insertText = normalizedUri;
             }
             // Improved sorting - prioritize commonly used APIs
             const commonAPIs = ['audio', 'activity', 'settings', 'system', 'application'];
@@ -740,17 +637,18 @@ class WebOSCompletionProvider {
                 // Apply smart method completion to MCP results (including file-based fallback)
                 for (const completion of mcpMethods) {
                     if (linePrefix && position && document) {
-                        console.log(`🔧 Applying smart completion to MCP method: ${completion.label}`);
-                        const methodSmartCompletion = this.getSmartMethodCompletion(completion.label, linePrefix, position, document);
-                        console.log(`🔧 Smart completion result for ${completion.label}:`, methodSmartCompletion);
-                        if (methodSmartCompletion.additionalTextEdits && methodSmartCompletion.additionalTextEdits.length > 0) {
-                            completion.insertText = methodSmartCompletion.insertText;
+                        const context = {
+                            document,
+                            position,
+                            linePrefix,
+                            fullLine: document.lineAt(position.line).text,
+                            cursorPos: position.character
+                        };
+                        const methodSmartCompletion = smart_completion_1.SmartCompletionEngine.getMethodCompletion(completion.label, context);
+                        completion.insertText = methodSmartCompletion.insertText;
+                        if (methodSmartCompletion.additionalTextEdits) {
                             completion.additionalTextEdits = methodSmartCompletion.additionalTextEdits;
-                            console.log(`🎯 Applied additionalTextEdits to MCP method: ${completion.label}`);
-                        }
-                        else {
-                            completion.insertText = methodSmartCompletion.insertText;
-                            console.log(`🎯 Applied simple insertText to MCP method: ${completion.label}`);
+                            console.log(`🎯 Applied smart completion to MCP method: ${completion.label}`);
                         }
                     }
                 }
@@ -763,29 +661,30 @@ class WebOSCompletionProvider {
             }
             console.warn('⚠️ Failed to get methods from MCP:', error);
         }
-        // Try file-based fallback first
-        console.log(`🔍 Trying file-based fallback for service: "${api.serviceName}"`);
-        const fileFallbackMethods = this.apiProvider.getFallbackMethods(api.serviceName);
-        console.log(`📋 File-based fallback result: ${fileFallbackMethods.length} methods`);
-        if (fileFallbackMethods.length > 0) {
-            console.log(`✅ Using file-based fallback methods`);
-            for (const method of fileFallbackMethods) {
+        // Try enhanced fallback (file-based + minimal fallback)
+        console.log(`🔍 Trying enhanced fallback for service: "${api.serviceName}"`);
+        const fallbackMethods = this.apiProvider.getFallbackMethodsEnhanced(api.serviceName);
+        console.log(`📋 Enhanced fallback result: ${fallbackMethods.length} methods`);
+        if (fallbackMethods.length > 0) {
+            console.log(`✅ Using enhanced fallback methods`);
+            for (const method of fallbackMethods) {
                 const completion = new vscode.CompletionItem(method.name, vscode.CompletionItemKind.Method);
                 completion.detail = `${api.serviceName}.${method.name} (file-based)`;
                 completion.documentation = new vscode.MarkdownString(`${method.description}\\n\\n*Loaded from local API files*`);
                 // Smart method insertion - replace existing partial method name
                 if (linePrefix && position && document) {
-                    console.log(`🔧 Calling getSmartMethodCompletion for file-based method: ${method.name}`);
-                    const methodSmartCompletion = this.getSmartMethodCompletion(method.name, linePrefix, position, document);
-                    console.log(`🔧 getSmartMethodCompletion result:`, methodSmartCompletion);
-                    if (methodSmartCompletion.additionalTextEdits && methodSmartCompletion.additionalTextEdits.length > 0) {
-                        completion.insertText = methodSmartCompletion.insertText;
+                    const context = {
+                        document,
+                        position,
+                        linePrefix,
+                        fullLine: document.lineAt(position.line).text,
+                        cursorPos: position.character
+                    };
+                    const methodSmartCompletion = smart_completion_1.SmartCompletionEngine.getMethodCompletion(method.name, context);
+                    completion.insertText = methodSmartCompletion.insertText;
+                    if (methodSmartCompletion.additionalTextEdits) {
                         completion.additionalTextEdits = methodSmartCompletion.additionalTextEdits;
-                        console.log(`🎯 Using additionalTextEdits for file-based method: ${method.name}`);
-                    }
-                    else {
-                        completion.insertText = methodSmartCompletion.insertText;
-                        console.log(`🎯 Using simple insertText for file-based method: ${method.name}`);
+                        console.log(`🎯 Using smart completion for file-based method: ${method.name}`);
                     }
                 }
                 else {
@@ -810,15 +709,17 @@ class WebOSCompletionProvider {
             completion.documentation = new vscode.MarkdownString(method.description);
             // Smart method insertion - replace existing partial method name
             if (linePrefix && position && document) {
-                const methodSmartCompletion = this.getSmartMethodCompletion(method.name, linePrefix, position, document);
-                if (methodSmartCompletion.additionalTextEdits && methodSmartCompletion.additionalTextEdits.length > 0) {
-                    // Use additionalTextEdits for more precise control
-                    completion.insertText = methodSmartCompletion.insertText;
+                const context = {
+                    document,
+                    position,
+                    linePrefix,
+                    fullLine: document.lineAt(position.line).text,
+                    cursorPos: position.character
+                };
+                const methodSmartCompletion = smart_completion_1.SmartCompletionEngine.getMethodCompletion(method.name, context);
+                completion.insertText = methodSmartCompletion.insertText;
+                if (methodSmartCompletion.additionalTextEdits) {
                     completion.additionalTextEdits = methodSmartCompletion.additionalTextEdits;
-                    console.log('🎯 Using additionalTextEdits for method replacement:', { methodName: method.name, edits: methodSmartCompletion.additionalTextEdits });
-                }
-                else {
-                    completion.insertText = methodSmartCompletion.insertText;
                 }
             }
             else {
@@ -974,81 +875,53 @@ class WebOSCompletionProvider {
         return Object.keys(methodMap);
     }
     getServiceNameFromURI(uri) {
-        // Map of URIs to service names
-        const uriToServiceMap = {
-            'luna://com.webos.service.audio': 'Audio',
-            'luna://com.palm.activitymanager': 'Activity Manager',
-            'luna://com.webos.applicationManager': 'Application Manager',
-            'luna://com.webos.service.connectionmanager': 'Connection Manager',
-            'luna://com.webos.service.settings': 'Settings Service',
-            'luna://com.webos.service.systemservice': 'System Service',
-            'luna://com.webos.service.tv.systemproperty': 'TV Device Information',
-            'luna://com.webos.service.db': 'Database',
-            'luna://com.webos.service.drm': 'DRM',
-            'luna://com.webos.service.ble': 'BLE GATT',
-            'luna://com.webos.service.magicremote': 'Magic Remote',
-            'luna://com.webos.service.mediadb': 'Media Database',
-            'luna://com.webos.service.keymanager': 'Keymanager3',
-            'luna://com.webos.service.sm': 'Device Unique ID',
-            'luna://com.webos.service.camera': 'Camera'
-        };
-        // Try exact match first
-        const exactMatch = uriToServiceMap[uri];
-        if (exactMatch) {
-            console.log(`🎯 Exact URI match: ${uri} → ${exactMatch}`);
-            return exactMatch;
-        }
-        // Try partial matching
-        for (const [uriPattern, serviceName] of Object.entries(uriToServiceMap)) {
-            if (uri.includes(uriPattern) || uriPattern.includes(uri)) {
-                console.log(`🎯 Partial URI match: ${uri} → ${serviceName}`);
-                return serviceName;
-            }
+        // URI 정규화를 통한 서비스명 추출
+        const serviceName = uri_normalizer_1.URINormalizer.getServiceNameFromURI(uri);
+        if (serviceName) {
+            console.log(`🎯 Service name from normalized URI: ${uri} → ${serviceName}`);
+            return serviceName;
         }
         console.log(`❌ No service name found for URI: ${uri}`);
         return null;
     }
     getServiceURIFromName(serviceName) {
-        // Map of service names to URIs (reverse of getServiceNameFromURI)
-        const serviceToUriMap = {
-            'Audio': 'luna://com.webos.service.audio',
-            'Activity Manager': 'luna://com.palm.activitymanager',
-            'Application Manager': 'luna://com.webos.applicationManager',
-            'Connection Manager': 'luna://com.webos.service.connectionmanager',
-            'Settings Service': 'luna://com.webos.service.settings',
-            'System Service': 'luna://com.webos.service.systemservice',
-            'TV Device Information': 'luna://com.webos.service.tv.systemproperty',
-            'Database': 'luna://com.webos.service.db',
-            'DRM': 'luna://com.webos.service.drm',
-            'BLE GATT': 'luna://com.webos.service.ble',
-            'Magic Remote': 'luna://com.webos.service.magicremote',
-            'Media Database': 'luna://com.webos.service.mediadb',
-            'Keymanager3': 'luna://com.webos.service.keymanager',
-            'Device Unique ID': 'luna://com.webos.service.sm',
-            'Camera': 'luna://com.webos.service.camera'
-        };
-        // Try exact match first
-        const exactMatch = serviceToUriMap[serviceName];
-        if (exactMatch) {
-            console.log(`🎯 Exact service match: ${serviceName} → ${exactMatch}`);
-            return exactMatch;
-        }
-        // Try partial matching
-        for (const [servicePattern, uri] of Object.entries(serviceToUriMap)) {
-            if (serviceName.includes(servicePattern) || servicePattern.includes(serviceName)) {
-                console.log(`🎯 Partial service match: ${serviceName} → ${uri}`);
-                return uri;
-            }
+        // URI 정규화를 통한 표준 URI 추출
+        const standardUri = uri_normalizer_1.URINormalizer.getStandardURIFromServiceName(serviceName);
+        if (standardUri) {
+            console.log(`🎯 Standard URI from service name: ${serviceName} → ${standardUri}`);
+            return standardUri;
         }
         console.log(`❌ No URI found for service: ${serviceName}`);
         return null;
     }
     isCompletingParameters(linePrefix, document, position) {
         console.log('🔍 isCompletingParameters - checking linePrefix:', JSON.stringify(linePrefix));
-        // First check if we're in a method line - if so, this should be handled by method completion
-        if (linePrefix.includes('method:') || (document && position && document.lineAt(position.line).text.includes('method:'))) {
-            console.log('❌ This is a method line, not parameter completion');
-            return false;
+        // Check if we're in a method line - only exclude if we're actually completing the method value
+        if (document && position) {
+            const fullLine = document.lineAt(position.line).text;
+            const cursorPos = position.character;
+            // Check if cursor is within method property value (not just any line with method:)
+            const methodRegex = /\bmethod\s*:\s*(['"])([^'"]*?)(?:\1|$)/g;
+            let match;
+            while ((match = methodRegex.exec(fullLine)) !== null) {
+                const quote = match[1];
+                const content = match[2];
+                const methodStartPos = match.index;
+                const quoteStartPos = match.index + match[0].indexOf(quote);
+                const contentStartPos = quoteStartPos + 1;
+                let contentEndPos;
+                if (match[0].endsWith(quote)) {
+                    contentEndPos = match.index + match[0].length - 1;
+                }
+                else {
+                    contentEndPos = match.index + match[0].length;
+                }
+                // Only exclude if cursor is actually within the method property value
+                if (cursorPos >= contentStartPos && cursorPos <= contentEndPos) {
+                    console.log('❌ Cursor is within method property value, not parameter completion');
+                    return false;
+                }
+            }
         }
         // Enhanced parameter detection with full line analysis
         if (document && position) {
@@ -1083,15 +956,22 @@ class WebOSCompletionProvider {
                 }
             }
         }
-        // Simplified fallback detection
+        // Enhanced fallback detection - more flexible patterns
         const parameterPropertyRegex = /\bparameters\s*:\s*\{[^}]*$/;
         if (parameterPropertyRegex.test(linePrefix)) {
             console.log('✅ Parameters object detected (fallback)');
             return true;
         }
-        // Check for parameter property patterns
+        // Check for parameter property patterns (more flexible)
         if (linePrefix.includes('parameters:') && linePrefix.includes('{')) {
             console.log('✅ Parameters property detected');
+            return true;
+        }
+        // Additional patterns for parameter completion
+        if (linePrefix.match(/^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*:\s*$/) || // "paramName: " pattern
+            linePrefix.match(/^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*$/) || // "paramName" pattern
+            linePrefix.match(/^\s*$/)) { // Empty line in parameters object
+            console.log('✅ Parameter name pattern detected');
             return true;
         }
         console.log('❌ No parameter completion patterns matched');
@@ -1148,6 +1028,46 @@ class WebOSCompletionProvider {
             return this.getFallbackParameterCompletions(serviceURI, methodName);
         }
         console.log('✅ Found API:', api.serviceName);
+        // First, try to get parameters from local API file
+        console.log(`🔍 Looking for method "${methodName}" in local API file...`);
+        const localMethod = this.apiProvider.getMethodFromLocalFile(serviceURI, methodName);
+        if (localMethod && localMethod.parameters && localMethod.parameters.length > 0) {
+            console.log(`📋 Found ${localMethod.parameters.length} parameters in local API file`);
+            for (const param of localMethod.parameters) {
+                console.log(`🔍 Processing parameter:`, {
+                    name: param.name,
+                    type: param.type,
+                    required: param.required,
+                    description: param.description
+                });
+                const completion = new vscode.CompletionItem(param.name, vscode.CompletionItemKind.Property);
+                completion.detail = `${param.type} - ${param.required ? 'required' : 'optional'}`;
+                completion.documentation = new vscode.MarkdownString(`**${param.name}** (${param.type})\\n\\n${param.description || 'Parameter for ' + methodName}\\n\\n${param.required ? '**Required**' : '*Optional*'}`);
+                // Smart parameter insertion with type-appropriate values
+                const paramValue = this.getParameterDefaultValue(param);
+                console.log(`🔍 Parameter value for ${param.name}:`, paramValue);
+                // Try both snippet and simple text insertion
+                completion.insertText = new vscode.SnippetString(`${param.name}: \${1:${paramValue}}`);
+                completion.insertText = `${param.name}: ${paramValue}`; // Fallback to simple text
+                completion.sortText = `local_${param.name}`;
+                // Ensure the completion item has proper label and filtering
+                completion.label = param.name;
+                completion.kind = vscode.CompletionItemKind.Property;
+                completion.filterText = param.name; // Ensure it can be filtered by name
+                completion.preselect = true; // Make it more prominent
+                console.log(`✅ Created completion item for parameter: ${param.name}`, {
+                    label: completion.label,
+                    detail: completion.detail,
+                    insertText: completion.insertText,
+                    sortText: completion.sortText,
+                    filterText: completion.filterText,
+                    preselect: completion.preselect
+                });
+                completions.push(completion);
+            }
+            console.log(`✅ Added ${completions.length} parameter completions from local API file`);
+            return completions;
+        }
         try {
             // Check cancellation before expensive MCP call
             if (token?.isCancellationRequested) {
@@ -1212,27 +1132,49 @@ class WebOSCompletionProvider {
     }
     getParameterDefaultValue(param) {
         const type = param.type?.toLowerCase() || 'string';
+        console.log(`🔍 getParameterDefaultValue called for:`, {
+            name: param.name,
+            type: param.type,
+            lowerType: type
+        });
         if (param.name === 'subscribe') {
+            console.log(`✅ Special case: subscribe parameter, returning 'true'`);
             return 'true';
         }
+        let defaultValue;
         switch (type) {
             case 'boolean':
-                return 'true';
+                defaultValue = 'true';
+                break;
             case 'number':
             case 'integer':
-                return '0';
+                defaultValue = '0';
+                break;
             case 'array':
-                return '[]';
+                defaultValue = '[]';
+                break;
             case 'object':
-                return '{}';
+                defaultValue = '{}';
+                break;
             default:
-                return `"${param.name}Value"`;
+                defaultValue = `"${param.name}Value"`;
+                break;
         }
+        console.log(`🔍 Default value for ${param.name} (${type}):`, defaultValue);
+        return defaultValue;
     }
     getCommonParameterCompletions() {
         const commonParams = [
             { name: 'subscribe', type: 'boolean', description: '변경 알림을 구독할지 여부', required: false },
             { name: 'returnValue', type: 'boolean', description: '성공 여부를 나타내는 값', required: false },
+            { name: 'volume', type: 'number', description: '볼륨 레벨 (0-100)', required: false },
+            { name: 'muted', type: 'boolean', description: '음소거 상태', required: false },
+            { name: 'source', type: 'string', description: '오디오 소스', required: false },
+            { name: 'category', type: 'string', description: '카테고리', required: false },
+            { name: 'id', type: 'string', description: '식별자', required: false },
+            { name: 'name', type: 'string', description: '이름', required: false },
+            { name: 'value', type: 'any', description: '값', required: false },
+            { name: 'enabled', type: 'boolean', description: '활성화 상태', required: false },
         ];
         return commonParams.map(param => {
             const completion = new vscode.CompletionItem(param.name, vscode.CompletionItemKind.Property);
@@ -1247,7 +1189,7 @@ class WebOSCompletionProvider {
     getFallbackParameterCompletions(serviceURI, methodName) {
         console.log(`🔍 getFallbackParameterCompletions called with serviceURI: "${serviceURI}", methodName: "${methodName}"`);
         const completions = [];
-        // Minimal method-specific parameters for most common cases only
+        // Enhanced method-specific parameters for common webOS methods
         const minimalMethodParameterMap = {
             'getVolume': [
                 { name: 'subscribe', type: 'boolean', description: '볼륨 변경 알림을 구독할지 여부', required: false }
@@ -1255,8 +1197,20 @@ class WebOSCompletionProvider {
             'setVolume': [
                 { name: 'volume', type: 'number', description: '설정할 볼륨 수준 (0-100)', required: true }
             ],
+            'setMuted': [
+                { name: 'muted', type: 'boolean', description: '음소거 상태', required: true }
+            ],
+            'getMuted': [
+                { name: 'subscribe', type: 'boolean', description: '음소거 상태 변경 알림을 구독할지 여부', required: false }
+            ],
+            'getSystemInfo': [
+                { name: 'subscribe', type: 'boolean', description: '시스템 정보 변경 알림을 구독할지 여부', required: false }
+            ],
             'getSystemSettings': [
                 { name: 'keys', type: 'array', description: '조회할 설정 키 목록', required: true }
+            ],
+            'setSystemSettings': [
+                { name: 'settings', type: 'object', description: '설정할 값들', required: true }
             ]
         };
         // Minimal service-specific common parameters

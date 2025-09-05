@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebOSHoverProvider = void 0;
 const vscode = __importStar(require("vscode"));
+const uri_normalizer_1 = require("../utils/uri-normalizer");
 class WebOSHoverProvider {
     constructor(apiProvider) {
         this.apiProvider = apiProvider;
@@ -102,13 +103,26 @@ class WebOSHoverProvider {
     }
     createServiceURIHover(serviceURI) {
         console.log(`🔍 Looking for API info for URI: "${serviceURI}"`);
+        // URI 정규화 적용
+        const normalizedURI = uri_normalizer_1.URINormalizer.normalizeURI(serviceURI) || serviceURI;
+        console.log(`🔄 Normalized URI: "${serviceURI}" → "${normalizedURI}"`);
         const apis = this.apiProvider.getAPIs();
         console.log(`📋 Available APIs: ${apis.map(a => a.serviceUri).join(', ')}`);
-        // Try exact match first
-        let api = apis.find(a => a.serviceUri === serviceURI);
-        // If no exact match, try partial matching
+        // Try exact match with normalized URI first
+        let api = apis.find(a => {
+            const apiNormalizedUri = uri_normalizer_1.URINormalizer.normalizeURI(a.serviceUri) || a.serviceUri;
+            return apiNormalizedUri === normalizedURI;
+        });
+        // If no exact match, try with original URI
         if (!api) {
-            api = apis.find(a => a.serviceUri.includes(serviceURI) || serviceURI.includes(a.serviceUri));
+            api = apis.find(a => a.serviceUri === serviceURI);
+        }
+        // If still no match, try partial matching
+        if (!api) {
+            api = apis.find(a => {
+                const apiNormalizedUri = uri_normalizer_1.URINormalizer.normalizeURI(a.serviceUri) || a.serviceUri;
+                return apiNormalizedUri.includes(normalizedURI) || normalizedURI.includes(apiNormalizedUri);
+            });
         }
         console.log(`🎯 Found API: ${api ? api.serviceName : 'none'}`);
         if (api) {
@@ -116,7 +130,15 @@ class WebOSHoverProvider {
             markdown.isTrusted = true;
             markdown.supportHtml = true;
             markdown.appendMarkdown(`### ${api.serviceName}\n\n`);
-            markdown.appendMarkdown(`**Service URI:** \`${api.serviceUri}\`\n\n`);
+            // 정규화된 URI 정보 표시
+            if (normalizedURI !== serviceURI) {
+                markdown.appendMarkdown(`**Standard URI:** \`${normalizedURI}\`\n\n`);
+                markdown.appendMarkdown(`**Original URI:** \`${serviceURI}\`\n\n`);
+                markdown.appendMarkdown(`🔄 **Note:** URI has been normalized to standard format\n\n`);
+            }
+            else {
+                markdown.appendMarkdown(`**Service URI:** \`${api.serviceUri}\`\n\n`);
+            }
             markdown.appendMarkdown(`**Category:** ${api.category}\n\n`);
             markdown.appendMarkdown(`**Status:** ${api.status}\n\n`);
             markdown.appendMarkdown(`**Description:** ${api.description}\n\n`);
@@ -476,18 +498,9 @@ class WebOSHoverProvider {
 });`;
     }
     getServiceURIFromName(serviceName) {
-        const uriMapping = {
-            'Audio': 'luna://com.webos.service.audio',
-            'Activity Manager': 'luna://com.palm.activitymanager',
-            'TV Device Information': 'luna://com.webos.service.tv.systemproperty',
-            'Settings Service': 'luna://com.webos.service.settings',
-            'System Service': 'luna://com.webos.service.systemservice',
-            'Application Manager': 'luna://com.webos.applicationManager',
-            'Connection Manager': 'luna://com.webos.service.connectionmanager',
-            'Database': 'luna://com.webos.service.db',
-            'DRM': 'luna://com.webos.service.drm'
-        };
-        return uriMapping[serviceName] || 'luna://com.webos.service.unknown';
+        // URI 정규화를 통한 표준 URI 추출
+        const standardUri = uri_normalizer_1.URINormalizer.getStandardURIFromServiceName(serviceName);
+        return standardUri || 'luna://com.webos.service.unknown';
     }
     getMethodInfoFromFile(serviceName, methodName) {
         console.log(`🔍 Getting method info from file for ${serviceName}.${methodName}`);
