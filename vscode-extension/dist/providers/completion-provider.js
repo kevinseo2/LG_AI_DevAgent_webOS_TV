@@ -254,6 +254,24 @@ class WebOSCompletionProvider {
             console.log('Found complete luna:// in line prefix');
             return true;
         }
+        // Check for partial service names that need URI completion
+        if (inWebOSContext && linePrefix.match(/['"][a-zA-Z][^'"]*['"]\s*,?\s*$/)) {
+            console.log('Found partial service name in quotes, suggesting URI completion');
+            return true;
+        }
+        // Check for incomplete service names in quotes (like 'audio', 'database', etc.)
+        if (inWebOSContext && linePrefix.match(/['"][a-zA-Z][^'"]*['"]\s*,\s*\{/)) {
+            console.log('Found service name followed by object, suggesting URI completion');
+            return true;
+        }
+        // Check for specific service names that need URI completion
+        const serviceNames = ['audio', 'database', 'system', 'network', 'device', 'security', 'application', 'connection', 'settings', 'activity', 'media', 'drm', 'keymanager', 'magic', 'remote', 'ble', 'gatt', 'camera', 'device', 'unique', 'id', 'tv', 'information'];
+        for (const serviceName of serviceNames) {
+            if (inWebOSContext && linePrefix.includes(`'${serviceName}'`) || linePrefix.includes(`"${serviceName}"`)) {
+                console.log(`Found specific service name '${serviceName}', suggesting URI completion`);
+                return true;
+            }
+        }
         // Check for placeholder service URIs (더 정확한 검사)
         if (linePrefix.match(/['"]service\.uri['"]?$/) ||
             linePrefix.match(/['"]service\.name['"]?$/) ||
@@ -827,7 +845,7 @@ class WebOSCompletionProvider {
         console.log('⚠️ Using minimal hardcoded fallback for unknown service');
         // Minimal hardcoded methods for most common services only
         const minimalMethodsByURI = {
-            'luna://com.webos.service.audio': [
+            'luna://com.webos.audio': [
                 { name: 'getVolume', description: '현재 볼륨 수준을 조회합니다' }
             ],
             'luna://com.palm.activitymanager': [
@@ -1215,7 +1233,7 @@ class WebOSCompletionProvider {
         };
         // Minimal service-specific common parameters
         const minimalServiceParameterMap = {
-            'luna://com.webos.service.audio': [
+            'luna://com.webos.audio': [
                 { name: 'subscribe', type: 'boolean', description: '변경 알림 구독 여부', required: false }
             ]
         };

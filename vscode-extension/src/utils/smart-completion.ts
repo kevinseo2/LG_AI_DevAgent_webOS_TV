@@ -85,7 +85,7 @@ export class SmartCompletionEngine {
             const quoteIndex = match[0].indexOf(quote);
             const contentStart = match.index + quoteIndex + 1; // 시작 따옴표 다음
             const contentEnd = match[0].endsWith(quote) ? 
-                match.index + match[0].length - 1 : // 끝 따옴표 전까지
+                match.index + quoteIndex + 1 + content.length : // 내용 끝까지
                 match.index + match[0].length;     // 문자열 끝까지
             
             // 커서가 이 범위 안에 있는지 확인
@@ -156,6 +156,41 @@ export class SmartCompletionEngine {
             
             // 커서가 이 범위 안에 있는지 확인
             if (context.cursorPos >= contentStart && context.cursorPos <= contentEnd) {
+                console.log('🔍 Found service parameter match:', {
+                    content,
+                    startPos: contentStart,
+                    endPos: contentEnd,
+                    cursorPos: context.cursorPos,
+                    fullLine: context.fullLine
+                });
+                return {
+                    content,
+                    startPos: contentStart,
+                    endPos: contentEnd,
+                    quote
+                };
+            }
+        }
+        
+        // 추가: 완전한 문자열이지만 서비스 이름인 경우도 감지 (예: 'audio', 'database')
+        const serviceNameRegex = /webOS\.service\.request\s*\(\s*(['"])([a-zA-Z][^'"]*)\1\s*,/;
+        const serviceNameMatch = context.fullLine.match(serviceNameRegex);
+        if (serviceNameMatch) {
+            const quote = serviceNameMatch[1];
+            const content = serviceNameMatch[2];
+            const matchIndex = serviceNameMatch.index || 0;
+            const contentStart = matchIndex + serviceNameMatch[0].indexOf(quote) + 1;
+            const contentEnd = contentStart + content.length;
+            
+            // 커서가 이 범위 안에 있는지 확인
+            if (context.cursorPos >= contentStart && context.cursorPos <= contentEnd) {
+                console.log('🔍 Found service name match:', {
+                    content,
+                    startPos: contentStart,
+                    endPos: contentEnd,
+                    cursorPos: context.cursorPos,
+                    fullLine: context.fullLine
+                });
                 return {
                     content,
                     startPos: contentStart,
@@ -214,7 +249,9 @@ export class SmartCompletionEngine {
         
         // 전체 라인에서의 절대 위치로 변환
         const absoluteStartPos = context.position.character - context.linePrefix.length + contentStartPos;
-        const absoluteEndPos = context.cursorPos; // 현재 커서 위치
+        // 더 안전한 끝 위치 계산: 현재 커서 위치와 내용 길이 중 더 큰 값 사용
+        const contentEndPos = absoluteStartPos + content.length;
+        const absoluteEndPos = Math.max(context.cursorPos, contentEndPos); // 커서 위치와 내용 끝 중 더 큰 값
         
         console.log('🔍 findQuotedContentAtLineEnd:', {
             content,
@@ -223,7 +260,10 @@ export class SmartCompletionEngine {
             cursorPos: context.cursorPos,
             matchIndex,
             absoluteStartPos,
-            absoluteEndPos
+            contentEndPos,
+            absoluteEndPos,
+            'content.length': content.length,
+            'Math.max result': Math.max(context.cursorPos, contentEndPos)
         });
         
         return {
@@ -249,8 +289,9 @@ export class SmartCompletionEngine {
             content.startsWith('set') ||
             content.startsWith('create') ||
             content.startsWith('delete') ||
-            // 이상한 조합 패턴도 감지 (예: setMutedmethodName)
+            // 이상한 조합 패턴도 감지 (예: setMutedmethodName, setMutedset)
             /^(get|set|create|delete|add|remove)\w*methodName$/.test(content) ||
+            /^(get|set|create|delete|add|remove)\w*(get|set|create|delete|add|remove)/.test(content) || // 중복된 메서드명 패턴
             content.length < 25 // 더 긴 내용도 고려
         );
     }
@@ -268,6 +309,8 @@ export class SmartCompletionEngine {
             content.includes('service.') ||
             content.includes('com.webos') ||
             content.startsWith('l') || // luna 타이핑 중
+            // 추가: 일반적인 서비스 이름들 (audio, database, system 등)
+            /^(audio|database|system|network|device|security|application|connection|settings|activity|application|media|drm|keymanager|magic|remote|ble|gatt|camera|device|unique|id|tv|information)$/i.test(content) ||
             content.length < 30 // 비교적 짧은 내용은 교체 대상
         );
     }

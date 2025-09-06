@@ -150,10 +150,10 @@ class FallbackProvider {
         const snippets = [];
         // Basic webOS.service.request snippet
         const basicRequest = new vscode.CompletionItem('webOS.service.request', vscode.CompletionItemKind.Snippet);
-        basicRequest.insertText = new vscode.SnippetString(`webOS.service.request('\${1:luna://com.webos.service.audio}', {
-    method: '\${2:getVolume}',
+        basicRequest.insertText = new vscode.SnippetString(`webOS.service.request('\${1:luna://com.webos.audio}', {
+    method: '\${2:setMuted}',
     parameters: {
-        \${3:subscribe: true}
+        \${3:muted: true}
     },
     onSuccess: function(response) {
         \${4:console.log('Success:', response);}
@@ -168,8 +168,8 @@ class FallbackProvider {
         snippets.push(basicRequest);
         // Audio API snippet
         const audioSnippet = new vscode.CompletionItem('webOS Audio API', vscode.CompletionItemKind.Snippet);
-        audioSnippet.insertText = new vscode.SnippetString(`webOS.service.request('luna://com.webos.service.audio', {
-    method: '\${1|getVolume,setVolume,setMuted|}',
+        audioSnippet.insertText = new vscode.SnippetString(`webOS.service.request('luna://com.webos.audio', {
+    method: '\${1|setMuted,volumeDown,volumeUp|}',
     parameters: {
         \${2:// parameters}
     },
@@ -222,9 +222,9 @@ exports.FallbackProvider = FallbackProvider;
 FallbackProvider.MINIMAL_API_SET = [
     {
         serviceName: 'Audio',
-        serviceUri: 'luna://com.webos.service.audio',
+        serviceUri: 'luna://com.webos.audio',
         category: 'media',
-        description: '오디오 볼륨 및 음소거 제어를 위한 메서드를 제공합니다.',
+        description: '볼륨 음소거 및 증감 제어 메서드를 제공합니다.',
         status: 'active'
     },
     {
@@ -273,62 +273,66 @@ FallbackProvider.MINIMAL_API_SET = [
 FallbackProvider.MINIMAL_METHOD_SET = {
     'Audio': [
         {
-            name: 'getVolume',
-            description: '현재 볼륨 수준을 조회합니다.',
-            deprecated: false,
-            parameters: [
-                {
-                    name: 'subscribe',
-                    type: 'boolean',
-                    required: false,
-                    description: '볼륨 변경 알림을 구독할지 여부'
-                }
-            ]
-        },
-        {
-            name: 'setVolume',
-            description: '볼륨 수준을 설정합니다.',
-            deprecated: false,
-            parameters: [
-                {
-                    name: 'volume',
-                    type: 'number',
-                    required: true,
-                    description: '설정할 볼륨 수준 (0-100)'
-                }
-            ]
-        },
-        {
             name: 'setMuted',
-            description: '음소거 상태를 설정합니다.',
+            description: '볼륨을 음소거하거나 음소거 해제합니다.',
             deprecated: false,
             parameters: [
                 {
                     name: 'muted',
                     type: 'boolean',
                     required: true,
-                    description: '음소거 여부 (true: 음소거, false: 해제)'
+                    description: '음소거/해제 여부 (true: 음소거, false: 해제)'
                 }
             ]
+        },
+        {
+            name: 'volumeDown',
+            description: '볼륨을 1 감소시킵니다.',
+            deprecated: false,
+            parameters: []
+        },
+        {
+            name: 'volumeUp',
+            description: '볼륨을 1 증가시킵니다.',
+            deprecated: false,
+            parameters: []
         }
     ],
     'Activity Manager': [
         {
             name: 'adopt',
-            description: 'Activity의 부모로 전환하려는 의지를 등록합니다.',
+            description: '앱이나 서비스가 Activity의 부모로 전환되려는 의지를 등록합니다.',
             deprecated: false,
             parameters: [
                 {
                     name: 'activityId',
                     type: 'number',
-                    required: true,
-                    description: 'Activity ID'
+                    required: false,
+                    description: 'Activity ID. activityName과 둘 중 하나는 필수입니다.'
+                },
+                {
+                    name: 'activityName',
+                    type: 'string',
+                    required: false,
+                    description: 'Activity 이름. activityId와 둘 중 하나는 필수입니다.'
                 },
                 {
                     name: 'wait',
                     type: 'boolean',
                     required: true,
-                    description: 'Activity가 해제될 때까지 대기할지 여부'
+                    description: 'Activity가 해제될 때까지 대기할지 여부를 결정하는 플래그입니다.'
+                },
+                {
+                    name: 'subscribe',
+                    type: 'boolean',
+                    required: true,
+                    description: '구독 여부를 결정하는 플래그입니다. true: 구독, false: 구독하지 않음 (기본값)'
+                },
+                {
+                    name: 'detailedEvents',
+                    type: 'boolean',
+                    required: false,
+                    description: 'Activity Manager가 Activity의 요구사항 상태가 변경될 때 update 이벤트를 생성하도록 하는 플래그입니다.'
                 }
             ]
         },
@@ -371,7 +375,13 @@ FallbackProvider.MINIMAL_METHOD_SET = {
                     name: 'keys',
                     type: 'array',
                     required: true,
-                    description: '조회할 설정 키 목록'
+                    description: '조회할 설정 키 배열'
+                },
+                {
+                    name: 'subscribe',
+                    type: 'boolean',
+                    required: false,
+                    description: '설정 변경 구독 여부'
                 }
             ]
         }

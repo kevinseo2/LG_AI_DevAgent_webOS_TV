@@ -208,7 +208,10 @@ export class WebOSCodeActionProvider implements vscode.CodeActionProvider {
         const hasOnSuccess = /onSuccess\s*:/i.test(callText);
         console.log(`📝 Has onSuccess: ${hasOnSuccess}`);
         
-        const missingErrorHandling = hasOnSuccess && !hasOnFailure;
+        // 에러 핸들링이 누락된 경우: 
+        // 1. onSuccess가 있으면 onFailure도 있어야 함
+        // 2. 또는 onSuccess와 onFailure가 모두 없으면 둘 다 추가해야 함
+        const missingErrorHandling = (hasOnSuccess && !hasOnFailure) || (!hasOnSuccess && !hasOnFailure);
         console.log(`🎯 Missing error handling: ${missingErrorHandling}`);
         
         return missingErrorHandling;
@@ -469,7 +472,7 @@ ${indentation}}`;
     private getCommonParametersForMethod(serviceURI: string, methodName: string): string {
         // Return common parameters for known method combinations
         const parameterMap: Record<string, Record<string, string>> = {
-            'luna://com.webos.service.audio': {
+            'luna://com.webos.audio': {
                 'getVolume': '\n        subscribe: false',
                 'setVolume': '\n        volume: 50'
             },

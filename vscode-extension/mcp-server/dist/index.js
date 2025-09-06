@@ -4,12 +4,12 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { APIManager } from './services/api-manager.js';
-// import { CodeAnalyzer } from './services/code-analyzer.js'; // Disabled due to glob dependency
+import { CodeAnalyzer } from './services/code-analyzer.js';
 import { APIUpdater } from './services/api-updater.js';
 import { SmartSuggestionEngine } from './services/smart-suggestions.js';
 // Initialize services
 const apiManager = new APIManager();
-let codeAnalyzer; // Disabled due to glob dependency
+let codeAnalyzer;
 let apiUpdater;
 let smartSuggestions;
 // Define tool schemas
@@ -438,7 +438,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     metrics: {
                         totalLines: validatedArgs.code.split('\n').length,
                         webOSAPICalls: (validatedArgs.code.match(/webOS\.service\.request/g) || []).length,
-                        uniqueAPIs: ['luna://com.webos.service.audio'],
+                        uniqueAPIs: ['luna://com.webos.audio'],
                         deprecatedUsage: 0,
                         errorHandlingCoverage: 0,
                         asyncPatterns: { callback: 1, promise: 0, async: 0 }
@@ -570,7 +570,7 @@ async function main() {
         await apiManager.initialize();
         console.log('API Manager initialized successfully');
         // Initialize AI services
-        // codeAnalyzer = new CodeAnalyzer(apiManager['apis']); // Disabled due to glob dependency
+        codeAnalyzer = new CodeAnalyzer(apiManager['apis']);
         apiUpdater = new APIUpdater();
         smartSuggestions = new SmartSuggestionEngine(apiManager['apis']);
         // Schedule periodic updates

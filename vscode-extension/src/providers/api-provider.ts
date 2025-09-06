@@ -145,7 +145,7 @@ export class WebOSAPIProvider {
             // Absolute emergency: provide at least one API
             this.apis = [{
                 serviceName: 'Audio',
-                serviceUri: 'luna://com.webos.service.audio',
+                serviceUri: 'luna://com.webos.audio',
                 category: 'media',
                 description: 'Basic audio control (Emergency fallback)',
                 status: 'active'
@@ -801,7 +801,7 @@ export class WebOSAPIProvider {
         
         const variations: string[] = [];
         
-        // Extract from luna://com.webos.service.audio -> audio, service.audio, webos.service.audio, com.webos.service.audio
+        // Extract from luna://com.webos.audio -> audio, webos.audio, com.webos.audio
         const uriParts = uri.replace('luna://', '').split('.');
         
         if (uriParts.length > 0) {

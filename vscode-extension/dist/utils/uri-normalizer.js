@@ -65,15 +65,20 @@ class URINormalizer {
         this.initializeCache();
         if (!serviceName)
             return null;
+        console.log(`🔍 Looking up service name: "${serviceName}"`);
+        console.log(`📋 Available cache entries:`, Array.from(this.serviceNameToUriCache.entries()));
         // 정확한 매치 시도
         let standardUri = this.serviceNameToUriCache.get(serviceName);
         if (standardUri) {
+            console.log(`✅ Exact match found: ${serviceName} → ${standardUri}`);
             return standardUri;
         }
         // 정규화된 서비스명으로 시도
         const normalizedName = serviceName.toLowerCase().replace(/\s+/g, '');
+        console.log(`🔄 Trying normalized name: "${normalizedName}"`);
         standardUri = this.serviceNameToUriCache.get(normalizedName);
         if (standardUri) {
+            console.log(`✅ Normalized match found: ${normalizedName} → ${standardUri}`);
             return standardUri;
         }
         // 부분 매칭 시도

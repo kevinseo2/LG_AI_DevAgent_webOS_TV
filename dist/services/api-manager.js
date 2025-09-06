@@ -79,8 +79,10 @@ export class APIManager {
     async getAPIInfo(serviceName, includeExamples = true, includeCompatibility = true) {
         await this.initialize();
         const api = this.apis.get(serviceName);
-        if (!api)
+        if (!api) {
+            console.warn(`API not found: ${serviceName}. Available APIs: ${Array.from(this.apis.keys()).join(', ')}`);
             return null;
+        }
         // Create a copy to avoid modifying the original
         const result = JSON.parse(JSON.stringify(api));
         // Remove examples if not requested
@@ -137,11 +139,13 @@ export class APIManager {
         await this.initialize();
         const api = this.apis.get(options.serviceName);
         if (!api) {
-            throw new Error(`API not found: ${options.serviceName}`);
+            const availableAPIs = Array.from(this.apis.keys()).join(', ');
+            throw new Error(`API not found: ${options.serviceName}. Available APIs: ${availableAPIs}`);
         }
         const method = api.methods.find(m => m.name === options.methodName);
         if (!method) {
-            throw new Error(`Method not found: ${options.methodName} in ${options.serviceName}`);
+            const availableMethods = api.methods.map(m => m.name).join(', ');
+            throw new Error(`Method not found: ${options.methodName} in ${options.serviceName}. Available methods: ${availableMethods}`);
         }
         const serviceUri = api.apiInfo.serviceUri;
         const parameters = options.parameters || {};
@@ -192,7 +196,7 @@ export class APIManager {
         }
     }
     generateCodeByStyle(serviceUri, methodName, parameters, style, includeErrorHandling) {
-        const paramStr = JSON.stringify(parameters, null, 8).replace(/^/gm, '        ');
+        const paramStr = JSON.stringify(parameters, null, 4).replace(/^/gm, '        ');
         switch (style) {
             case 'async':
                 return this.generateAsyncCode(serviceUri, methodName, paramStr, includeErrorHandling);

@@ -188,7 +188,10 @@ class WebOSCodeActionProvider {
         // Also check if there's onSuccess but no onFailure
         const hasOnSuccess = /onSuccess\s*:/i.test(callText);
         console.log(`📝 Has onSuccess: ${hasOnSuccess}`);
-        const missingErrorHandling = hasOnSuccess && !hasOnFailure;
+        // 에러 핸들링이 누락된 경우: 
+        // 1. onSuccess가 있으면 onFailure도 있어야 함
+        // 2. 또는 onSuccess와 onFailure가 모두 없으면 둘 다 추가해야 함
+        const missingErrorHandling = (hasOnSuccess && !hasOnFailure) || (!hasOnSuccess && !hasOnFailure);
         console.log(`🎯 Missing error handling: ${missingErrorHandling}`);
         return missingErrorHandling;
     }
@@ -374,7 +377,7 @@ ${indentation}}`;
     getCommonParametersForMethod(serviceURI, methodName) {
         // Return common parameters for known method combinations
         const parameterMap = {
-            'luna://com.webos.service.audio': {
+            'luna://com.webos.audio': {
                 'getVolume': '\n        subscribe: false',
                 'setVolume': '\n        volume: 50'
             },

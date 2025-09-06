@@ -341,7 +341,7 @@ class WebOSHoverProvider {
         markdown.appendMarkdown(`**Syntax:**\n`);
         markdown.appendCodeblock(`webOS.service.request(uri, options)`, 'javascript');
         markdown.appendMarkdown(`**Parameters:**\n`);
-        markdown.appendMarkdown(`- \`uri\` (string) - Luna service URI (e.g., "luna://com.webos.service.audio")\n`);
+        markdown.appendMarkdown(`- \`uri\` (string) - Luna service URI (e.g., "luna://com.webos.audio")\n`);
         markdown.appendMarkdown(`- \`options\` (object) - Request options:\n`);
         markdown.appendMarkdown(`  - \`method\` (string) - Method name to call\n`);
         markdown.appendMarkdown(`  - \`parameters\` (object) - Method parameters\n`);
@@ -349,7 +349,7 @@ class WebOSHoverProvider {
         markdown.appendMarkdown(`  - \`onFailure\` (function) - Error callback\n`);
         markdown.appendMarkdown(`  - \`subscribe\` (boolean) - Whether to subscribe for updates\n\n`);
         markdown.appendMarkdown(`**Example:**\n`);
-        markdown.appendCodeblock(`webOS.service.request('luna://com.webos.service.audio', {
+        markdown.appendCodeblock(`webOS.service.request('luna://com.webos.audio', {
     method: 'getVolume',
     parameters: {},
     onSuccess: function(response) {
@@ -419,7 +419,7 @@ class WebOSHoverProvider {
                             description: '볼륨 변경 알림을 구독할지 여부'
                         }
                     ],
-                    example: `webOS.service.request('luna://com.webos.service.audio', {
+                    example: `webOS.service.request('luna://com.webos.audio', {
     method: 'getVolume',
     parameters: {
         subscribe: true

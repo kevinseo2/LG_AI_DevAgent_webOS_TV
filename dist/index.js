@@ -438,7 +438,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     metrics: {
                         totalLines: validatedArgs.code.split('\n').length,
                         webOSAPICalls: (validatedArgs.code.match(/webOS\.service\.request/g) || []).length,
-                        uniqueAPIs: ['luna://com.webos.service.audio'],
+                        uniqueAPIs: ['luna://com.webos.audio'],
                         deprecatedUsage: 0,
                         errorHandlingCoverage: 0,
                         asyncPatterns: { callback: 1, promise: 0, async: 0 }

@@ -275,58 +275,83 @@ export class SmartSuggestionEngine {
   }
 
   private generateAudioVolumeCode(style?: string): string {
+    // API 파일에서 실제 Audio API 정보 가져오기
+    const audioAPI = this.apis.get('Audio');
+    if (!audioAPI) {
+      return `// Audio API not found in API files`;
+    }
+
+    // 실제 존재하는 메서드 사용 (setMuted, volumeDown, volumeUp)
+    const availableMethod = audioAPI.methods.find(m => m.name === 'setMuted') || audioAPI.methods[0];
+    if (!availableMethod) {
+      return `// No available methods found in Audio API`;
+    }
+
+    const serviceUri = audioAPI.apiInfo.serviceUri;
+    const methodName = availableMethod.name;
+    const parameters = availableMethod.parameters || {};
+
     switch (style) {
       case 'async':
-        return `async function getVolume() {
+        return `async function ${methodName}() {
     try {
         const response = await new Promise((resolve, reject) => {
-            webOS.service.request('luna://com.webos.service.audio', {
-                method: 'getVolume',
-                parameters: { subscribe: true },
+            webOS.service.request('${serviceUri}', {
+                method: '${methodName}',
+                parameters: ${JSON.stringify(parameters, null, 8).replace(/^/gm, '                ')},
                 onSuccess: resolve,
                 onFailure: reject
             });
         });
-        console.log('Current volume:', response.volume);
+        console.log('${methodName} result:', response);
         return response;
     } catch (error) {
-        console.error('Failed to get volume:', error.errorText);
+        console.error('Failed to ${methodName}:', error.errorText);
     }
 }`;
       case 'promise':
-        return `const getVolume = () => {
+        return `const ${methodName} = () => {
     return new Promise((resolve, reject) => {
-        webOS.service.request('luna://com.webos.service.audio', {
-            method: 'getVolume',
-            parameters: { subscribe: true },
+        webOS.service.request('${serviceUri}', {
+            method: '${methodName}',
+            parameters: ${JSON.stringify(parameters, null, 8).replace(/^/gm, '            ')},
             onSuccess: resolve,
             onFailure: reject
         });
     });
 };`;
       default:
-        return `webOS.service.request('luna://com.webos.service.audio', {
-    method: 'getVolume',
-    parameters: {
-        subscribe: true
-    },
+        return `webOS.service.request('${serviceUri}', {
+    method: '${methodName}',
+    parameters: ${JSON.stringify(parameters, null, 4).replace(/^/gm, '    ')},
     onSuccess: function(response) {
-        console.log('Current volume:', response.volume);
-        console.log('Muted:', response.muted);
+        console.log('${methodName} result:', response);
     },
     onFailure: function(error) {
-        console.error('Failed to get volume:', error.errorText);
+        console.error('Failed to ${methodName}:', error.errorText);
     }
 });`;
     }
   }
 
   private generateNetworkStatusCode(style?: string): string {
-    return `webOS.service.request('luna://com.webos.service.connectionmanager', {
+    // API 파일에서 실제 Connection Manager API 정보 가져오기
+    const connectionAPI = this.apis.get('Connection Manager');
+    if (!connectionAPI) {
+      return `// Connection Manager API not found in API files`;
+    }
+
+    const serviceUri = connectionAPI.apiInfo.serviceUri;
+    const getStatusMethod = connectionAPI.methods.find(m => m.name === 'getStatus');
+    if (!getStatusMethod) {
+      return `// getStatus method not found in Connection Manager API`;
+    }
+
+    const parameters = getStatusMethod.parameters || {};
+
+    return `webOS.service.request('${serviceUri}', {
     method: 'getStatus',
-    parameters: {
-        subscribe: true
-    },
+    parameters: ${JSON.stringify(parameters, null, 4).replace(/^/gm, '    ')},
     onSuccess: function(response) {
         if (response.isInternetConnectionAvailable) {
             console.log('Internet available via:', response.connectedViaWifi ? 'WiFi' : 'Ethernet');
@@ -342,19 +367,24 @@ export class SmartSuggestionEngine {
   }
 
   private generateDatabaseCode(style?: string): string {
+    // API 파일에서 실제 Database API 정보 가져오기
+    const databaseAPI = this.apis.get('Database');
+    if (!databaseAPI) {
+      return `// Database API not found in API files`;
+    }
+
+    const serviceUri = databaseAPI.apiInfo.serviceUri;
+    const putMethod = databaseAPI.methods.find(m => m.name === 'put');
+    if (!putMethod) {
+      return `// put method not found in Database API`;
+    }
+
+    const parameters = putMethod.parameters || {};
+
     return `// Store data
-webOS.service.request('luna://com.webos.service.db', {
+webOS.service.request('${serviceUri}', {
     method: 'put',
-    parameters: {
-        objects: [{
-            _kind: 'com.mycompany.myapp:1',
-            userId: 'user123',
-            preferences: {
-                theme: 'dark',
-                language: 'en'
-            }
-        }]
-    },
+    parameters: ${JSON.stringify(parameters, null, 4).replace(/^/gm, '    ')},
     onSuccess: function(response) {
         console.log('Data saved:', response.results);
     },
@@ -365,11 +395,23 @@ webOS.service.request('luna://com.webos.service.db', {
   }
 
   private generateSettingsCode(style?: string): string {
-    return `webOS.service.request('luna://com.webos.service.settings', {
+    // API 파일에서 실제 Settings Service API 정보 가져오기
+    const settingsAPI = this.apis.get('Settings Service');
+    if (!settingsAPI) {
+      return `// Settings Service API not found in API files`;
+    }
+
+    const serviceUri = settingsAPI.apiInfo.serviceUri;
+    const getSystemSettingsMethod = settingsAPI.methods.find(m => m.name === 'getSystemSettings');
+    if (!getSystemSettingsMethod) {
+      return `// getSystemSettings method not found in Settings Service API`;
+    }
+
+    const parameters = getSystemSettingsMethod.parameters || {};
+
+    return `webOS.service.request('${serviceUri}', {
     method: 'getSystemSettings',
-    parameters: {
-        keys: ['localeInfo', 'country', 'timezone']
-    },
+    parameters: ${JSON.stringify(parameters, null, 4).replace(/^/gm, '    ')},
     onSuccess: function(response) {
         const settings = response.settings;
         console.log('Locale:', settings.localeInfo);
@@ -383,11 +425,23 @@ webOS.service.request('luna://com.webos.service.db', {
   }
 
   private generateDeviceInfoCode(style?: string): string {
-    return `webOS.service.request('luna://com.webos.service.tv.systemproperty', {
+    // API 파일에서 실제 TV Device Information API 정보 가져오기
+    const deviceInfoAPI = this.apis.get('TV Device Information');
+    if (!deviceInfoAPI) {
+      return `// TV Device Information API not found in API files`;
+    }
+
+    const serviceUri = deviceInfoAPI.apiInfo.serviceUri;
+    const getSystemInfoMethod = deviceInfoAPI.methods.find(m => m.name === 'getSystemInfo');
+    if (!getSystemInfoMethod) {
+      return `// getSystemInfo method not found in TV Device Information API`;
+    }
+
+    const parameters = getSystemInfoMethod.parameters || {};
+
+    return `webOS.service.request('${serviceUri}', {
     method: 'getSystemInfo',
-    parameters: {
-        keys: ['modelName', 'firmwareVersion', 'UHD', 'sdkVersion']
-    },
+    parameters: ${JSON.stringify(parameters, null, 4).replace(/^/gm, '    ')},
     onSuccess: function(response) {
         console.log('TV Model:', response.modelName);
         console.log('Firmware:', response.firmwareVersion);
@@ -426,9 +480,27 @@ class MediaApp {
     
     getDeviceInfo() {
         return new Promise((resolve) => {
-            webOS.service.request('luna://com.webos.service.tv.systemproperty', {
+            // API 파일에서 실제 TV Device Information API 정보 가져오기
+            const deviceInfoAPI = this.apis?.get('TV Device Information');
+            if (!deviceInfoAPI) {
+                console.warn('TV Device Information API not found');
+                resolve({});
+                return;
+            }
+            
+            const serviceUri = deviceInfoAPI.apiInfo.serviceUri;
+            const getSystemInfoMethod = deviceInfoAPI.methods.find(m => m.name === 'getSystemInfo');
+            if (!getSystemInfoMethod) {
+                console.warn('getSystemInfo method not found');
+                resolve({});
+                return;
+            }
+            
+            const parameters = getSystemInfoMethod.parameters || {};
+            
+            webOS.service.request(serviceUri, {
                 method: 'getSystemInfo',
-                parameters: { keys: ['modelName', 'UHD'] },
+                parameters: parameters,
                 onSuccess: (response) => {
                     this.deviceCapabilities = response;
                     resolve(response);
@@ -438,9 +510,25 @@ class MediaApp {
     }
     
     setupNetworkMonitoring() {
-        webOS.service.request('luna://com.webos.service.connectionmanager', {
+        // API 파일에서 실제 Connection Manager API 정보 가져오기
+        const connectionAPI = this.apis?.get('Connection Manager');
+        if (!connectionAPI) {
+            console.warn('Connection Manager API not found');
+            return;
+        }
+        
+        const serviceUri = connectionAPI.apiInfo.serviceUri;
+        const getStatusMethod = connectionAPI.methods.find(m => m.name === 'getStatus');
+        if (!getStatusMethod) {
+            console.warn('getStatus method not found');
+            return;
+        }
+        
+        const parameters = getStatusMethod.parameters || {};
+        
+        webOS.service.request(serviceUri, {
             method: 'getStatus',
-            parameters: { subscribe: true },
+            parameters: parameters,
             onSuccess: (response) => {
                 this.isConnected = response.isInternetConnectionAvailable;
                 this.onNetworkStatusChange(this.isConnected);
@@ -449,12 +537,28 @@ class MediaApp {
     }
     
     setupVolumeControl() {
-        webOS.service.request('luna://com.webos.service.audio', {
-            method: 'getVolume',
-            parameters: { subscribe: true },
+        // API 파일에서 실제 Audio API 정보 가져오기
+        const audioAPI = this.apis?.get('Audio');
+        if (!audioAPI) {
+            console.warn('Audio API not found');
+            return;
+        }
+        
+        const serviceUri = audioAPI.apiInfo.serviceUri;
+        const availableMethod = audioAPI.methods.find(m => m.name === 'setMuted') || audioAPI.methods[0];
+        if (!availableMethod) {
+            console.warn('No available methods found in Audio API');
+            return;
+        }
+        
+        const parameters = availableMethod.parameters || {};
+        
+        webOS.service.request(serviceUri, {
+            method: availableMethod.name,
+            parameters: parameters,
             onSuccess: (response) => {
-                this.volume = response.volume;
-                this.onVolumeChange(this.volume);
+                console.log('Audio control result:', response);
+                this.onVolumeChange(response);
             }
         });
     }
@@ -483,23 +587,43 @@ class GameInputHandler {
     }
     
     setupMagicRemote() {
+        // API 파일에서 실제 Magic Remote API 정보 가져오기
+        const magicRemoteAPI = this.apis?.get('Magic Remote');
+        if (!magicRemoteAPI) {
+            console.warn('Magic Remote API not found');
+            return;
+        }
+        
+        const serviceUri = magicRemoteAPI.apiInfo.serviceUri;
+        const availableMethod = magicRemoteAPI.methods.find(m => m.name === 'getSensorData') || magicRemoteAPI.methods[0];
+        if (!availableMethod) {
+            console.warn('No available methods found in Magic Remote API');
+            return;
+        }
+        
+        const parameters = availableMethod.parameters || {};
+        
         // Get sensor data for motion controls
-        webOS.service.request('luna://com.webos.service.magicremote', {
-            method: 'getSensorData',
-            parameters: { subscribe: true },
+        webOS.service.request(serviceUri, {
+            method: availableMethod.name,
+            parameters: parameters,
             onSuccess: (response) => {
                 this.handleMotionInput(response);
             }
         });
         
-        // Monitor pointer state
-        webOS.service.request('luna://com.webos.service.magicremote', {
-            method: 'getPointerState',
-            parameters: { subscribe: true },
-            onSuccess: (response) => {
-                this.handlePointerState(response.pointerVisible);
-            }
-        });
+        // Monitor pointer state (if available)
+        const pointerMethod = magicRemoteAPI.methods.find(m => m.name === 'getPointerState');
+        if (pointerMethod) {
+            const pointerParams = pointerMethod.parameters || {};
+            webOS.service.request(serviceUri, {
+                method: 'getPointerState',
+                parameters: pointerParams,
+                onSuccess: (response) => {
+                    this.handlePointerState(response.pointerVisible);
+                }
+            });
+        }
     }
     
     setupKeyHandlers() {
