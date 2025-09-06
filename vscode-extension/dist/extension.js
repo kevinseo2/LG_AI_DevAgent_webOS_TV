@@ -188,9 +188,10 @@ function registerCommands(context) {
 function registerChatParticipant(context) {
     // Register Chat Participant
     const chatParticipant = new chat_participant_1.WebOSChatParticipant(mcpClient);
-    context.subscriptions.push(vscode.chat.createChatParticipant('webos-tv-assistant', async (request, context, stream, token) => {
+    const participant = vscode.chat.createChatParticipant('webos-tv-assistant', async (request, context, stream, token) => {
         await chatParticipant.handleRequest(request, context, stream, token);
-    }));
+    });
+    context.subscriptions.push(participant);
 }
 function deactivate() {
     if (mcpClient) {

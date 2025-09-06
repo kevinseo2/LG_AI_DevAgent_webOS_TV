@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "publisher": "webos-tv-developer",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.90.0"
   },
   "repository": {
     "type": "git",
@@ -33,9 +33,8 @@
     "chatParticipants": [
       {
         "id": "webos-tv-assistant",
-        "name": "webOS TV Assistant",
-        "description": "webOS TV 개발을 위한 AI 어시스턴트",
-        "when": "true"
+        "name": "webos-tv-assistant",
+        "description": "webOS TV 개발을 위한 AI 어시스턴트"
       }
     ],
     "commands": [

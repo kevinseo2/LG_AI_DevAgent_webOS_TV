@@ -364,7 +364,7 @@ class MCPClient {
             attempts: this.reconnectAttempts
         };
     }
-    isConnected() {
+    isServerConnected() {
         return this.isConnected;
     }
     dispose() {

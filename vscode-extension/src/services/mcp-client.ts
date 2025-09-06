@@ -386,7 +386,7 @@ export class MCPClient {
         };
     }
 
-    isConnected(): boolean {
+    isServerConnected(): boolean {
         return this.isConnected;
     }
 

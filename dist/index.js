@@ -654,11 +654,25 @@ async function generateChatResponse(userQuery, context) {
                 }
                 return response;
             }
+            else {
+                return `## ❌ Audio API를 찾을 수 없습니다\n\n` +
+                    `Audio API 정보를 가져올 수 없습니다. API 파일이 올바르게 로드되지 않았을 수 있습니다.\n\n` +
+                    `**사용 가능한 API 목록을 확인하려면**: "webOS TV API 목록 알려줘"라고 질문해주세요.`;
+            }
         }
         // 코드 생성 요청
-        if (lowerQuery.includes('코드') || lowerQuery.includes('code') || lowerQuery.includes('예제')) {
-            if (lowerQuery.includes('audio') || lowerQuery.includes('볼륨')) {
-                return `## 🎵 Audio API 코드 예제\n\n\`\`\`javascript\n// 볼륨 음소거 설정\nwebOS.service.request('luna://com.webos.audio', {\n    method: 'setMuted',\n    parameters: {\n        muted: true\n    },\n    onSuccess: function(response) {\n        console.log('Volume muted successfully');\n    },\n    onFailure: function(error) {\n        console.error('Failed to mute volume:', error.errorText);\n    }\n});\n\`\`\``;
+        if (lowerQuery.includes('코드') || lowerQuery.includes('code') || lowerQuery.includes('예제') ||
+            lowerQuery.includes('만들어') || lowerQuery.includes('올리고') || lowerQuery.includes('내리고')) {
+            if (lowerQuery.includes('audio') || lowerQuery.includes('볼륨') || lowerQuery.includes('오디오')) {
+                if (lowerQuery.includes('올리고') || lowerQuery.includes('up')) {
+                    return `## 🎵 Audio API - 볼륨 올리기 예제\n\n\`\`\`javascript\n// 볼륨 올리기\nwebOS.service.request('luna://com.webos.audio', {\n    method: 'volumeUp',\n    parameters: {},\n    onSuccess: function(response) {\n        console.log('Volume increased successfully');\n        console.log('Current volume:', response.volume);\n    },\n    onFailure: function(error) {\n        console.error('Failed to increase volume:', error.errorText);\n    }\n});\n\`\`\`\n\n**설명**:\n- \`volumeUp\` 메서드를 사용하여 볼륨을 한 단계 올립니다\n- 파라미터는 필요하지 않습니다\n- 성공 시 현재 볼륨 정보를 받을 수 있습니다`;
+                }
+                else if (lowerQuery.includes('내리고') || lowerQuery.includes('down')) {
+                    return `## 🎵 Audio API - 볼륨 내리기 예제\n\n\`\`\`javascript\n// 볼륨 내리기\nwebOS.service.request('luna://com.webos.audio', {\n    method: 'volumeDown',\n    parameters: {},\n    onSuccess: function(response) {\n        console.log('Volume decreased successfully');\n        console.log('Current volume:', response.volume);\n    },\n    onFailure: function(error) {\n        console.error('Failed to decrease volume:', error.errorText);\n    }\n});\n\`\`\`\n\n**설명**:\n- \`volumeDown\` 메서드를 사용하여 볼륨을 한 단계 내립니다\n- 파라미터는 필요하지 않습니다\n- 성공 시 현재 볼륨 정보를 받을 수 있습니다`;
+                }
+                else {
+                    return `## 🎵 Audio API - 볼륨 조절 예제 모음\n\n### 1. 볼륨 올리기\n\`\`\`javascript\nwebOS.service.request('luna://com.webos.audio', {\n    method: 'volumeUp',\n    parameters: {},\n    onSuccess: function(response) {\n        console.log('Volume increased:', response.volume);\n    },\n    onFailure: function(error) {\n        console.error('Volume up failed:', error.errorText);\n    }\n});\n\`\`\`\n\n### 2. 볼륨 내리기\n\`\`\`javascript\nwebOS.service.request('luna://com.webos.audio', {\n    method: 'volumeDown',\n    parameters: {},\n    onSuccess: function(response) {\n        console.log('Volume decreased:', response.volume);\n    },\n    onFailure: function(error) {\n        console.error('Volume down failed:', error.errorText);\n    }\n});\n\`\`\`\n\n### 3. 음소거 설정\n\`\`\`javascript\nwebOS.service.request('luna://com.webos.audio', {\n    method: 'setMuted',\n    parameters: {\n        muted: true  // true: 음소거, false: 음소거 해제\n    },\n    onSuccess: function(response) {\n        console.log('Mute status changed:', response.muted);\n    },\n    onFailure: function(error) {\n        console.error('Mute failed:', error.errorText);\n    }\n});\n\`\`\`\n\n**사용 가능한 Audio API 메서드**:\n- \`volumeUp\`: 볼륨 올리기\n- \`volumeDown\`: 볼륨 내리기\n- \`setMuted\`: 음소거 설정/해제`;
+                }
             }
         }
         // 일반적인 응답

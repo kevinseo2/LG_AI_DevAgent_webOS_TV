@@ -1,18 +1,30 @@
-# webOS TV API MCP Server
+# webOS TV API MCP Server & VS Code Extension
 
-webOS TV 개발자를 위한 Model Context Protocol (MCP) 서버입니다. Luna Service API 정보 제공, 코드 생성, 자동완성 등의 기능을 제공합니다.
+webOS TV 개발자를 위한 Model Context Protocol (MCP) 서버와 VS Code 확장 프로그램입니다. Luna Service API 정보 제공, 코드 생성, 자동완성, 그리고 **VS Code LM API 기반 지능형 Chat Participant** 기능을 제공합니다.
 
-## 🚀 기능
+## 🚀 주요 기능
 
-### Phase 1 (현재 구현)
+### MCP Server (Phase 1-3 완료)
 - ✅ **API 목록 조회**: 카테고리, 상태, 버전별 필터링
 - ✅ **API 상세 정보**: 메서드, 파라미터, 호환성 정보 조회
 - ✅ **메서드 검색**: 이름이나 기능으로 API 메서드 검색
 - ✅ **코드 생성**: Callback, Async, Promise 스타일 지원
 - ✅ **VS Code 스니펫**: 개발 환경 통합을 위한 스니펫 제공
+- ✅ **스마트 제안**: AI 기반 코드 패턴 및 베스트 프랙티스
+
+### VS Code Extension (최신 업데이트)
+- ✅ **자동완성**: URI, 메서드, 파라미터 자동완성
+- ✅ **호버 도움말**: API 정보 및 사용법 표시
+- ✅ **코드 액션**: Quick Fix 및 코드 개선 제안
+- ✅ **지능형 Chat Participant**: **VS Code LM API 기반 AI 어시스턴트**
+  - GPT-4o 모델 활용
+  - 실시간 스트리밍 응답
+  - 프로젝트 컨텍스트 인식
+  - webOS TV 개발 전문가 역할
 
 ## 📦 설치
 
+### MCP Server
 ```bash
 # 의존성 설치
 npm install
@@ -26,6 +38,40 @@ npm run dev
 # 프로덕션 실행
 npm start
 ```
+
+### VS Code Extension
+```bash
+# 확장 프로그램 빌드
+cd vscode-extension
+npm run compile
+vsce package
+
+# 확장 프로그램 설치
+code --install-extension webos-tv-api-assistant-1.0.0.vsix
+```
+
+## 🤖 Chat Participant 사용법
+
+### 1. Chat Participant 활성화
+1. VS Code에서 Chat 패널 열기 (`Ctrl+Shift+L`)
+2. `@webos-tv-assistant` 선택
+3. webOS TV 개발 관련 질문 입력
+
+### 2. 예시 질문들
+- "현재 프로젝트에 맞는 Audio API 코드 만들어줘"
+- "webOS TV 앱의 성능 최적화 방법 알려줘"
+- "Database API로 데이터 저장하는 코드 작성해줘"
+- "Magic Remote 이벤트 처리하는 방법 알려줘"
+- "webOS TV 앱 배포 과정 설명해줘"
+
+### 3. AI 모델 정보
+- **주 모델**: GPT-4o (Copilot 기반)
+- **폴백**: MCP 서버 기반 응답
+- **특징**: 
+  - 실시간 스트리밍 응답
+  - 프로젝트 컨텍스트 인식
+  - webOS TV 개발 전문가 역할
+  - 한국어 응답 지원
 
 ## 🛠️ Available Tools
 
