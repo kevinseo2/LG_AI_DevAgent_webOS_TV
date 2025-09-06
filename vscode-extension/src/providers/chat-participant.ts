@@ -58,25 +58,30 @@ export class WebOSChatParticipant {
         token: vscode.CancellationToken
     ): Promise<void> {
         try {
-            // 컨텍스트 정보 수집
+            // 1단계: MCP 서버에서 최신 정보 먼저 조회
+            console.log('🔍 Step 1: Gathering MCP server information...');
+            const mcpContext = await this.gatherMCPContext(userQuery, context);
+            
+            // 2단계: 컨텍스트 정보 수집
+            console.log('🔍 Step 2: Gathering VS Code context...');
             const contextInfo = await this.gatherContextInfo(context);
-            const apiInfo = await this.gatherAPIInfo(userQuery);
             
-            // webOS 개발 전문가 프롬프트 구성
-            const systemPrompt = this.buildWebOSExpertPrompt(contextInfo, apiInfo);
+            // 3단계: MCP 정보와 컨텍스트를 결합하여 강화된 프롬프트 구성
+            console.log('🔍 Step 3: Building enhanced prompt with MCP data...');
+            const systemPrompt = this.buildEnhancedWebOSExpertPrompt(contextInfo, mcpContext);
             
-            // LLM 요청 메시지 구성
+            // 4단계: LLM 요청 메시지 구성
             const messages = [
                 vscode.LanguageModelChatMessage.User(systemPrompt),
                 vscode.LanguageModelChatMessage.User(userQuery)
             ];
 
-            console.log('🚀 Sending request to LLM...');
+            console.log('🚀 Step 4: Sending enhanced request to LLM...');
             
-            // LLM에 요청 전송 및 스트리밍 응답 처리
+            // 5단계: LLM에 요청 전송 및 스트리밍 응답 처리
             const chatResponse = await this.llmProvider!.sendRequest(messages, {}, token);
             
-            // 스트리밍 응답 처리
+            // 6단계: 스트리밍 응답 처리
             for await (const fragment of chatResponse.text) {
                 if (token.isCancellationRequested) {
                     break;
@@ -87,9 +92,9 @@ export class WebOSChatParticipant {
         } catch (error) {
             if (error instanceof vscode.LanguageModelError) {
                 console.error('❌ LLM Error:', error.message, error.code);
-                stream.markdown(`❌ **LLM 오류가 발생했습니다:** ${error.message}\n\n대신 기본 응답을 제공합니다.`);
-                // LLM 오류 시 폴백 응답
-                await this.generateEnhancedResponse(userQuery, context, stream, token);
+                stream.markdown(`❌ **LLM 오류가 발생했습니다:** ${error.message}\n\n대신 MCP 서버 기반 응답을 제공합니다.`);
+                // LLM 오류 시 MCP 서버 기반 폴백 응답
+                await this.generateMCPBasedResponse(userQuery, context, stream, token);
             } else {
                 console.error('❌ Unexpected error:', error);
                 stream.markdown(`❌ **예상치 못한 오류가 발생했습니다:**\n\`\`\`\n${error}\n\`\`\``);
@@ -97,18 +102,232 @@ export class WebOSChatParticipant {
         }
     }
 
-    private buildWebOSExpertPrompt(contextInfo: any, apiInfo: any): string {
+    private async gatherMCPContext(userQuery: string, context: vscode.ChatContext): Promise<any> {
+        const mcpContext: any = {
+            available: false,
+            apiList: [],
+            relevantAPIs: [],
+            specificAPIInfo: null,
+            codeExamples: [],
+            error: null
+        };
+
+        try {
+            if (!this.mcpClient || !this.mcpClient.isServerConnected()) {
+                console.log('⚠️ MCP server not connected, using fallback data');
+                mcpContext.error = 'MCP server not connected';
+                return mcpContext;
+            }
+
+            console.log('🔍 Gathering MCP context for query:', userQuery);
+
+            // 1. API 목록 조회
+            try {
+                const apiListResult = await this.mcpClient.callTool('webos_list_apis', {});
+                if (apiListResult && apiListResult.content) {
+                    const apiListText = apiListResult.content[0].text;
+                    console.log('🔍 MCP Server API List Response:', apiListText.substring(0, 200) + '...');
+                    
+                    // MCP 서버는 마크다운 형식으로 응답하므로 파싱
+                    mcpContext.apiList = this.parseAPIListFromMarkdown(apiListText);
+                    mcpContext.available = true;
+                    console.log('✅ Parsed API list from MCP server:', mcpContext.apiList.length, 'APIs');
+                }
+            } catch (error) {
+                console.error('❌ Failed to get API list from MCP:', error);
+                mcpContext.apiList = this.getDefaultAPIs();
+            }
+
+            // 2. 사용자 질문과 관련된 API 찾기
+            mcpContext.relevantAPIs = this.findRelevantAPIs(userQuery, mcpContext.apiList);
+
+            // 3. 관련된 API들의 상세 정보 조회
+            if (mcpContext.relevantAPIs.length > 0) {
+                console.log('🔍 Fetching detailed info for relevant APIs:', mcpContext.relevantAPIs.map((api: any) => api.serviceName));
+                
+                for (const api of mcpContext.relevantAPIs.slice(0, 3)) { // 최대 3개 API만 조회
+                    try {
+                        const apiInfoResult = await this.mcpClient.callTool('webos_get_api_info', {
+                            serviceName: api.serviceName,
+                            includeExamples: true,
+                            includeCompatibility: true
+                        });
+                        if (apiInfoResult && apiInfoResult.content) {
+                            if (!mcpContext.specificAPIInfo) {
+                                mcpContext.specificAPIInfo = '';
+                            }
+                            mcpContext.specificAPIInfo += `\n## ${api.serviceName} API 상세 정보\n${apiInfoResult.content[0].text}\n`;
+                            console.log('✅ Retrieved specific API info for:', api.serviceName);
+                        }
+                    } catch (error) {
+                        console.error('❌ Failed to get specific API info for', api.serviceName, ':', error);
+                    }
+                }
+            }
+
+            // 4. 코드 생성이 요청된 경우 관련 예제 수집
+            if (this.isCodeGenerationQuery(userQuery)) {
+                // 관련된 API들에 대해 코드 예제 생성
+                for (const api of mcpContext.relevantAPIs.slice(0, 2)) { // 최대 2개 API
+                    try {
+                        const codeResult = await this.mcpClient.callTool('webos_generate_code', {
+                            serviceName: api.serviceName,
+                            methodName: this.extractMethodName(userQuery) || this.getDefaultMethodForAPI(api.serviceName),
+                            includeErrorHandling: true,
+                            codeStyle: 'async'
+                        });
+                        if (codeResult && codeResult.content) {
+                            mcpContext.codeExamples.push(`## ${api.serviceName} 예제\n${codeResult.content[0].text}`);
+                            console.log('✅ Retrieved code example for:', api.serviceName);
+                        }
+                    } catch (error) {
+                        console.error('❌ Failed to get code example for', api.serviceName, ':', error);
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error('❌ Error gathering MCP context:', error);
+            mcpContext.error = error instanceof Error ? error.message : String(error);
+        }
+
+        return mcpContext;
+    }
+
+    private isCodeGenerationQuery(query: string): boolean {
+        const lowerQuery = query.toLowerCase();
+        return lowerQuery.includes('코드') || 
+               lowerQuery.includes('code') || 
+               lowerQuery.includes('만들어') || 
+               lowerQuery.includes('예제') ||
+               lowerQuery.includes('생성');
+    }
+
+    private extractMethodName(query: string): string | null {
+        const lowerQuery = query.toLowerCase();
+        const methodKeywords = ['mute', 'unmute', 'volume', 'play', 'pause', 'stop', 'get', 'set', 'put', 'delete'];
+        
+        for (const keyword of methodKeywords) {
+            if (lowerQuery.includes(keyword)) {
+                return keyword;
+            }
+        }
+        
+        return null;
+    }
+
+    private getDefaultMethodForAPI(apiName: string): string {
+        const defaultMethods: { [key: string]: string } = {
+            'Audio': 'setMuted',
+            'Database': 'put',
+            'Settings Service': 'getSystemSettings',
+            'Connection Manager': 'getStatus',
+            'TV Device Information': 'getDeviceInfo',
+            'Camera': 'getCameraList',
+            'DRM': 'getDRMInfo',
+            'Magic Remote': 'getPointerInputSocket',
+            'BLE GATT': 'getStatus',
+            'Activity Manager': 'adopt',
+            'Application Manager': 'launch',
+            'System Service': 'getSystemInfo',
+            'Keymanager3': 'getKeyList',
+            'Media Database': 'getMediaList',
+            'Device Unique ID': 'getDeviceId'
+        };
+        
+        return defaultMethods[apiName] || 'getInfo';
+    }
+
+    private parseAPIListFromMarkdown(markdownText: string): any[] {
+        const apis: any[] = [];
+        const lines = markdownText.split('\n');
+        
+        let currentAPI: any = {};
+        
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            
+            // API 이름과 카테고리 파싱: **ServiceName** (category)
+            const apiNameMatch = trimmedLine.match(/\*\*(.*?)\*\*\s*\(([^)]+)\)/);
+            if (apiNameMatch) {
+                // 이전 API가 있으면 저장
+                if (currentAPI.serviceName) {
+                    apis.push(currentAPI);
+                }
+                
+                // 새 API 시작
+                currentAPI = {
+                    serviceName: apiNameMatch[1].trim(),
+                    category: apiNameMatch[2].trim()
+                };
+                continue;
+            }
+            
+            // URI 파싱: - URI: `luna://...`
+            const uriMatch = trimmedLine.match(/- URI:\s*`([^`]+)`/);
+            if (uriMatch && currentAPI.serviceName) {
+                currentAPI.serviceUri = uriMatch[1].trim();
+                continue;
+            }
+            
+            // Status 파싱: - Status: active/deprecated
+            const statusMatch = trimmedLine.match(/- Status:\s*(.+)/);
+            if (statusMatch && currentAPI.serviceName) {
+                currentAPI.status = statusMatch[1].trim();
+                continue;
+            }
+            
+            // Description 파싱: - Description: ...
+            const descMatch = trimmedLine.match(/- Description:\s*(.+)/);
+            if (descMatch && currentAPI.serviceName) {
+                currentAPI.description = descMatch[1].trim();
+                continue;
+            }
+        }
+        
+        // 마지막 API 추가
+        if (currentAPI.serviceName) {
+            apis.push(currentAPI);
+        }
+        
+        console.log('🔍 Parsed APIs from markdown:', apis.length, 'APIs found');
+        return apis;
+    }
+
+    private buildEnhancedWebOSExpertPrompt(contextInfo: any, mcpContext: any): string {
         const workspaceInfo = contextInfo.workspace?.name ? `현재 작업 중인 프로젝트: **${contextInfo.workspace.name}**` : '';
         const fileInfo = contextInfo.activeFile?.fileName ? `현재 열린 파일: \`${contextInfo.activeFile.fileName}\` (${contextInfo.activeFile.language})` : '';
         const projectType = contextInfo.projectType ? `프로젝트 유형: **${contextInfo.projectType}**` : '';
         const projectStructure = contextInfo.projectStructure ? `프로젝트 구조: ${contextInfo.projectStructure}` : '';
-        
-        const availableAPIs = apiInfo.apis ? apiInfo.apis.map((api: any) => 
-            `- **${api.serviceName}**: \`${api.serviceUri}\` (${api.description})`
-        ).join('\n') : 'API 정보를 불러오는 중...';
-
         const currentFileContent = contextInfo.fileContent ? 
             `\n## 📄 현재 파일 내용 (참고용)\n\`\`\`${contextInfo.activeFile?.language || 'javascript'}\n${contextInfo.fileContent}\n\`\`\`` : '';
+
+        // MCP 서버에서 가져온 최신 API 정보 구성
+        const mcpApiInfo = mcpContext.available ? 
+            `## 🔧 최신 webOS TV API 정보 (MCP 서버에서 실시간 조회)
+${mcpContext.apiList.map((api: any) => 
+    `- **${api.serviceName}**: \`${api.serviceUri}\` (${api.category}) - ${api.description || 'No description'}`
+).join('\n')}` : 
+            '## ⚠️ API 정보를 MCP 서버에서 가져올 수 없습니다. 기본 정보를 사용합니다.';
+
+        // 관련 API 정보
+        const relevantApiInfo = mcpContext.relevantAPIs.length > 0 ?
+            `## 🎯 사용자 질문과 관련된 API들
+${mcpContext.relevantAPIs.map((api: any) => 
+    `- **${api.serviceName}**: \`${api.serviceUri}\` - ${api.description || 'No description'}`
+).join('\n')}` : '';
+
+        // 특정 API 상세 정보
+        const specificApiInfo = mcpContext.specificAPIInfo ?
+            `## 📚 특정 API 상세 정보
+${mcpContext.specificAPIInfo}` : '';
+
+        // 코드 예제 정보
+        const codeExamplesInfo = mcpContext.codeExamples.length > 0 ?
+            `## 💻 MCP 서버에서 제공하는 코드 예제
+${mcpContext.codeExamples.map((example: string, index: number) => 
+    `### 예제 ${index + 1}\n\`\`\`javascript\n${example}\n\`\`\``
+).join('\n\n')}` : '';
 
         return `당신은 webOS TV 개발 전문가입니다. 사용자의 질문에 대해 정확하고 실용적인 답변을 제공해주세요.
 
@@ -116,6 +335,7 @@ export class WebOSChatParticipant {
 - **webOS TV 플랫폼 전문가**: Luna Service API, webOS 앱 개발, TV 특화 기능에 대한 깊은 지식
 - **실용적인 개발자**: 실제 코드 예제, 베스트 프랙티스, 문제 해결 방법 제공
 - **한국어 응답**: 모든 답변을 한국어로 제공하되, 코드와 기술 용어는 원문 유지
+- **최신 정보 활용**: MCP 서버에서 실시간으로 조회한 최신 API 정보를 기반으로 답변
 
 ## 📋 현재 개발 컨텍스트
 ${workspaceInfo}
@@ -124,23 +344,71 @@ ${projectType}
 ${projectStructure}
 ${currentFileContent}
 
-## 🔧 사용 가능한 webOS TV API
-${availableAPIs}
+${mcpApiInfo}
+
+${relevantApiInfo}
+
+${specificApiInfo}
+
+${codeExamplesInfo}
 
 ## 💡 응답 가이드라인
-1. **구체적인 코드 예제**: 실제 사용 가능한 webOS.service.request() 코드 제공
-2. **단계별 설명**: 복잡한 기능은 단계별로 설명
-3. **오류 처리**: onSuccess/onFailure 콜백 포함
-4. **최신 정보**: webOS 6.0+ 기준의 최신 API 사용
-5. **실용적 조언**: 성능, 보안, 사용자 경험 고려
-6. **컨텍스트 활용**: 현재 프로젝트와 파일 내용을 고려한 맞춤형 답변
+1. **MCP 서버 정보 우선 활용**: 위에 제공된 MCP 서버에서 조회한 최신 API 정보를 우선적으로 활용
+2. **구체적인 코드 예제**: 실제 사용 가능한 webOS.service.request() 코드 제공
+3. **단계별 설명**: 복잡한 기능은 단계별로 설명
+4. **오류 처리**: onSuccess/onFailure 콜백 포함
+5. **최신 정보**: webOS 6.0+ 기준의 최신 API 사용
+6. **실용적 조언**: 성능, 보안, 사용자 경험 고려
+7. **컨텍스트 활용**: 현재 프로젝트와 파일 내용을 고려한 맞춤형 답변
 
 ## 🚫 피해야 할 것
 - 추상적이거나 일반적인 답변
 - webOS와 관련 없는 일반적인 웹 개발 조언
 - 구식이거나 더 이상 사용되지 않는 API
+- MCP 서버에서 제공한 최신 정보를 무시하는 답변
 
 사용자의 질문에 대해 위의 가이드라인을 따라 정확하고 실용적인 답변을 제공해주세요.`;
+    }
+
+    private async generateMCPBasedResponse(
+        userQuery: string,
+        context: vscode.ChatContext,
+        stream: vscode.ChatResponseStream,
+        token: vscode.CancellationToken
+    ): Promise<void> {
+        try {
+            console.log('🔄 Generating MCP-based fallback response...');
+            
+            if (!this.mcpClient || !this.mcpClient.isServerConnected()) {
+                stream.markdown('⚠️ **MCP 서버에 연결할 수 없습니다.**\n\n' +
+                    'webOS TV API 정보를 가져오기 위해 MCP 서버가 필요합니다.\n' +
+                    '다음 명령어로 서버를 재연결해보세요:\n' +
+                    '`webOS API: Reconnect MCP Server`');
+                return;
+            }
+
+            // MCP 서버의 Chat Assistant tool을 직접 사용
+            const result = await this.mcpClient.callTool('webos_chat_assistant', {
+                userQuery: userQuery,
+                context: {
+                    projectType: 'utility',
+                    targetVersion: '6.x'
+                }
+            });
+
+            if (result && result.content) {
+                // MCP 서버에서 이미 포맷된 응답을 받음
+                stream.markdown(result.content[0].text);
+            } else {
+                // MCP 서버 응답이 없는 경우 기본 응답
+                stream.markdown('❌ **응답을 생성할 수 없습니다.**\n\n' +
+                    'MCP 서버에서 응답을 받지 못했습니다. 다시 시도해주세요.');
+            }
+
+        } catch (error) {
+            console.error('❌ MCP-based response error:', error);
+            stream.markdown(`❌ **MCP 서버 응답 생성 중 오류가 발생했습니다:**\n\`\`\`\n${error}\n\`\`\``);
+        }
     }
 
     private async generateEnhancedResponse(
@@ -304,12 +572,34 @@ ${availableAPIs}
     }
 
     private extractAPIName(query: string): string | null {
-        // 간단한 API 이름 추출 로직
-        const apiKeywords = ['audio', 'database', 'settings', 'connection', 'device', 'camera', 'drm', 'magic', 'remote', 'ble', 'gatt'];
+        const lowerQuery = query.toLowerCase();
         
-        for (const keyword of apiKeywords) {
-            if (query.toLowerCase().includes(keyword)) {
-                return keyword;
+        // API 이름 매핑 (소문자 키워드 -> 정확한 API 이름)
+        const apiMapping: { [key: string]: string } = {
+            'audio': 'Audio',
+            'database': 'Database',
+            'settings': 'Settings Service',
+            'connection': 'Connection Manager',
+            'device': 'TV Device Information',
+            'camera': 'Camera',
+            'drm': 'DRM',
+            'magic': 'Magic Remote',
+            'remote': 'Magic Remote',
+            'ble': 'BLE GATT',
+            'gatt': 'BLE GATT',
+            'activity': 'Activity Manager',
+            'application': 'Application Manager',
+            'system': 'System Service',
+            'keymanager': 'Keymanager3',
+            'mediadb': 'Media Database',
+            'deviceuniqueid': 'Device Unique ID',
+            'device unique id': 'Device Unique ID'
+        };
+        
+        // 키워드 매칭
+        for (const [keyword, apiName] of Object.entries(apiMapping)) {
+            if (lowerQuery.includes(keyword)) {
+                return apiName;
             }
         }
         
@@ -550,43 +840,13 @@ ${availableAPIs}
     }
 
     private async gatherAPIInfo(userQuery: string): Promise<any> {
-        const apiInfo: any = {
+        // 이 메서드는 이제 gatherMCPContext로 대체되었습니다.
+        // 하위 호환성을 위해 기본 API 정보만 반환합니다.
+        return {
             available: false,
-            apis: [],
-            relevantAPIs: []
+            apis: this.getDefaultAPIs(),
+            relevantAPIs: this.findRelevantAPIs(userQuery, this.getDefaultAPIs())
         };
-
-        try {
-            if (this.mcpClient && this.mcpClient.isServerConnected()) {
-                // MCP 서버에서 API 목록 가져오기
-                const result = await this.mcpClient.callTool('webos_list_apis', {});
-                if (result && result.content) {
-                    try {
-                        const responseText = result.content[0].text;
-                        console.log('🔍 MCP Server Response:', responseText.substring(0, 100) + '...');
-                        
-                        // JSON 파싱 시도
-                        apiInfo.apis = JSON.parse(responseText);
-                        apiInfo.available = true;
-                        
-                        // 사용자 질문과 관련된 API 찾기
-                        apiInfo.relevantAPIs = this.findRelevantAPIs(userQuery, apiInfo.apis);
-                    } catch (parseError) {
-                        console.error('❌ API info parse error:', parseError);
-                        console.error('❌ Raw response:', result.content[0].text);
-                        
-                        // JSON 파싱 실패 시 기본 API 목록 사용
-                        apiInfo.apis = this.getDefaultAPIs();
-                        apiInfo.available = false;
-                        apiInfo.relevantAPIs = this.findRelevantAPIs(userQuery, apiInfo.apis);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('❌ API info gathering error:', error);
-        }
-
-        return apiInfo;
     }
 
     private inferProjectType(contextInfo: any): string {
@@ -610,19 +870,69 @@ ${availableAPIs}
     private findRelevantAPIs(userQuery: string, apis: any[]): any[] {
         const lowerQuery = userQuery.toLowerCase();
         const relevantAPIs: any[] = [];
+        const scoredAPIs: { api: any; score: number }[] = [];
 
         for (const api of apis) {
             const apiName = api.serviceName?.toLowerCase() || '';
             const description = api.description?.toLowerCase() || '';
-            
-            if (lowerQuery.includes(apiName) || 
-                lowerQuery.includes(apiName.replace(' ', '')) ||
-                description.includes(lowerQuery.split(' ')[0])) {
-                relevantAPIs.push(api);
+            let score = 0;
+
+            // 정확한 API 이름 매칭 (높은 점수)
+            if (lowerQuery.includes(apiName)) {
+                score += 10;
+            }
+
+            // API 이름의 일부 매칭
+            const apiWords = apiName.split(' ');
+            for (const word of apiWords) {
+                if (word.length > 2 && lowerQuery.includes(word)) {
+                    score += 5;
+                }
+            }
+
+            // 설명에서 키워드 매칭
+            const queryWords = lowerQuery.split(' ');
+            for (const word of queryWords) {
+                if (word.length > 2 && description.includes(word)) {
+                    score += 3;
+                }
+            }
+
+            // 특정 키워드 매칭
+            const keywordMappings: { [key: string]: string[] } = {
+                'audio': ['audio', 'sound', 'volume', 'mute', 'unmute'],
+                'database': ['database', 'db', 'data', 'store', 'save'],
+                'settings': ['settings', 'config', 'preference'],
+                'connection': ['connection', 'network', 'wifi', 'ethernet'],
+                'device': ['device', 'tv', 'hardware'],
+                'camera': ['camera', 'photo', 'image'],
+                'drm': ['drm', 'protection', 'encryption'],
+                'magic': ['magic', 'remote', 'pointer'],
+                'ble': ['ble', 'bluetooth', 'gatt'],
+                'activity': ['activity', 'lifecycle', 'adopt'],
+                'application': ['application', 'app', 'launch'],
+                'system': ['system', 'info', 'status'],
+                'keymanager': ['key', 'security', 'manager'],
+                'media': ['media', 'video', 'music'],
+                'deviceuniqueid': ['unique', 'id', 'identifier']
+            };
+
+            for (const [keyword, variations] of Object.entries(keywordMappings)) {
+                if (variations.some(variation => lowerQuery.includes(variation))) {
+                    if (apiName.includes(keyword) || apiName.includes(keyword.replace('ble', 'ble gatt'))) {
+                        score += 8;
+                    }
+                }
+            }
+
+            if (score > 0) {
+                scoredAPIs.push({ api, score });
             }
         }
 
-        return relevantAPIs.slice(0, 5); // 최대 5개만 반환
+        // 점수순으로 정렬하고 상위 API들 반환
+        scoredAPIs.sort((a, b) => b.score - a.score);
+        return scoredAPIs.slice(0, 5).map(item => item.api);
     }
 
     private buildSystemPrompt(contextInfo: any, apiInfo: any): string {
