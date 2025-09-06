@@ -5,7 +5,9 @@
     "category": "system",
     "description": "시스템 설정 값을 조회/설정하는 메서드를 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
@@ -14,13 +16,34 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "keys", "required": true, "type": "array", "description": "조회할 설정 키 배열" },
-        { "name": "subscribe", "required": false, "type": "boolean", "description": "설정 변경 구독 여부", "defaultValue": false }
+        {
+          "name": "keys",
+          "required": true,
+          "type": "array",
+          "description": "조회할 설정 키 배열"
+        },
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "설정 변경 구독 여부",
+          "defaultValue": false
+        }
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "settings", "type": "object", "required": false, "description": "조회된 설정 값들" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "settings",
+            "type": "object",
+            "required": false,
+            "description": "조회된 설정 값들"
+          }
         ]
       },
       "errors": [],
@@ -38,11 +61,21 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "settings", "required": true, "type": "object", "description": "설정할 키-값 쌍" }
+        {
+          "name": "settings",
+          "required": true,
+          "type": "object",
+          "description": "설정할 키-값 쌍"
+        }
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          }
         ]
       },
       "errors": [],
@@ -71,7 +104,8 @@
           "    }",
           "});"
         ],
-        "description": "시스템 설정 조회"
+        "description": "시스템 설정 조회",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-settings-set",
@@ -88,18 +122,39 @@
           "    }",
           "});"
         ],
-        "description": "시스템 설정 변경"
+        "description": "시스템 설정 변경",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
-      { "label": "getSystemSettings", "kind": "Method", "documentation": "시스템 설정 조회", "insertText": "getSystemSettings", "detail": "Settings Service" },
-      { "label": "setSystemSettings", "kind": "Method", "documentation": "시스템 설정 변경", "insertText": "setSystemSettings", "detail": "Settings Service" }
+      {
+        "label": "getSystemSettings",
+        "kind": "Method",
+        "documentation": "시스템 설정 조회",
+        "insertText": "getSystemSettings",
+        "detail": "Settings Service"
+      },
+      {
+        "label": "setSystemSettings",
+        "kind": "Method",
+        "documentation": "시스템 설정 변경",
+        "insertText": "setSystemSettings",
+        "detail": "Settings Service"
+      }
     ],
     "diagnostics": [
       {
         "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.settings'",
         "checks": [
-          { "field": "method", "validValues": ["getSystemSettings", "setSystemSettings"], "required": true, "type": "string" }
+          {
+            "field": "method",
+            "validValues": [
+              "getSystemSettings",
+              "setSystemSettings"
+            ],
+            "required": true,
+            "type": "string"
+          }
         ]
       }
     ]

@@ -5,13 +5,15 @@
     "category": "media",
     "description": "DRM 클라이언트 생성/해제, DRM 메시지 전송, 라이선스 오류 구독을 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
       "name": "load",
       "description": "주어진 DRM 타입에 대한 DRM 클라이언트 인스턴스를 생성합니다. 생성 후 다른 DRM API 사용이 가능합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
         {
@@ -19,7 +21,9 @@
           "required": true,
           "type": "string",
           "description": "DRM 타입. PlayReady: 'playready'",
-          "enum": ["playready"]
+          "enum": [
+            "playready"
+          ]
         },
         {
           "name": "appId",
@@ -57,15 +61,42 @@
         ]
       },
       "errors": [
-        { "code": 500, "message": "Vendor managed error" },
-        { "code": 501, "message": "This API is not supported in the activated DRM." },
-        { "code": 502, "message": "There is no process matching to input clientId." },
-        { "code": 503, "message": "It cannot find a key file in the DRM store." },
-        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
-        { "code": 505, "message": "It's not supporting drmType." },
-        { "code": 506, "message": "The key file is not a valid format." },
-        { "code": 507, "message": "It cannot get the valid time information." },
-        { "code": 599, "message": "It's an unknown error." }
+        {
+          "code": 500,
+          "message": "Vendor managed error"
+        },
+        {
+          "code": 501,
+          "message": "This API is not supported in the activated DRM."
+        },
+        {
+          "code": 502,
+          "message": "There is no process matching to input clientId."
+        },
+        {
+          "code": 503,
+          "message": "It cannot find a key file in the DRM store."
+        },
+        {
+          "code": 504,
+          "message": "A part of whole parameters is not valid data or format."
+        },
+        {
+          "code": 505,
+          "message": "It's not supporting drmType."
+        },
+        {
+          "code": 506,
+          "message": "The key file is not a valid format."
+        },
+        {
+          "code": 507,
+          "message": "It cannot get the valid time information."
+        },
+        {
+          "code": 599,
+          "message": "It's an unknown error."
+        }
       ],
       "examples": [
         {
@@ -78,7 +109,7 @@
     {
       "name": "unload",
       "description": "DRM 클라이언트 인스턴스를 제거하고 리소스를 해제합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
         {
@@ -111,15 +142,42 @@
         ]
       },
       "errors": [
-        { "code": 500, "message": "Vendor managed error" },
-        { "code": 501, "message": "This API is not supported in the activated DRM." },
-        { "code": 502, "message": "There is no process matching to input clientId." },
-        { "code": 503, "message": "It cannot find a key file in the DRM store." },
-        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
-        { "code": 505, "message": "It's not supporting drmType." },
-        { "code": 506, "message": "The key file is not a valid format." },
-        { "code": 507, "message": "It cannot get the valid time information." },
-        { "code": 599, "message": "It's an unknown error." }
+        {
+          "code": 500,
+          "message": "Vendor managed error"
+        },
+        {
+          "code": 501,
+          "message": "This API is not supported in the activated DRM."
+        },
+        {
+          "code": 502,
+          "message": "There is no process matching to input clientId."
+        },
+        {
+          "code": 503,
+          "message": "It cannot find a key file in the DRM store."
+        },
+        {
+          "code": 504,
+          "message": "A part of whole parameters is not valid data or format."
+        },
+        {
+          "code": 505,
+          "message": "It's not supporting drmType."
+        },
+        {
+          "code": 506,
+          "message": "The key file is not a valid format."
+        },
+        {
+          "code": 507,
+          "message": "It cannot get the valid time information."
+        },
+        {
+          "code": 599,
+          "message": "It's an unknown error."
+        }
       ],
       "examples": [
         {
@@ -132,7 +190,7 @@
     {
       "name": "isLoaded",
       "description": "주어진 애플리케이션 ID에 매핑된 DRM 클라이언트가 존재하는지 확인합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
         {
@@ -177,10 +235,22 @@
         ]
       },
       "errors": [
-        { "code": 500, "message": "Vendor managed error" },
-        { "code": 501, "message": "This API is not supported in the activated DRM." },
-        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
-        { "code": 599, "message": "It's an unknown error." }
+        {
+          "code": 500,
+          "message": "Vendor managed error"
+        },
+        {
+          "code": 501,
+          "message": "This API is not supported in the activated DRM."
+        },
+        {
+          "code": 504,
+          "message": "A part of whole parameters is not valid data or format."
+        },
+        {
+          "code": 599,
+          "message": "It's an unknown error."
+        }
       ],
       "examples": [
         {
@@ -193,7 +263,7 @@
     {
       "name": "sendDrmMessage",
       "description": "DRM 시스템에서 정의한 메시지 타입을 사용하여 DRM 서비스로 메시지를 전송합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
         {
@@ -262,15 +332,42 @@
         ]
       },
       "errors": [
-        { "code": 500, "message": "Vendor managed error" },
-        { "code": 501, "message": "This API is not supported in the activated DRM." },
-        { "code": 502, "message": "There is no process matching to input clientId." },
-        { "code": 503, "message": "It cannot find a key file in the DRM store." },
-        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
-        { "code": 505, "message": "It's not supporting drmType." },
-        { "code": 506, "message": "The key file is not a valid format." },
-        { "code": 507, "message": "It cannot get the valid time information." },
-        { "code": 599, "message": "It's an unknown error." }
+        {
+          "code": 500,
+          "message": "Vendor managed error"
+        },
+        {
+          "code": 501,
+          "message": "This API is not supported in the activated DRM."
+        },
+        {
+          "code": 502,
+          "message": "There is no process matching to input clientId."
+        },
+        {
+          "code": 503,
+          "message": "It cannot find a key file in the DRM store."
+        },
+        {
+          "code": 504,
+          "message": "A part of whole parameters is not valid data or format."
+        },
+        {
+          "code": 505,
+          "message": "It's not supporting drmType."
+        },
+        {
+          "code": 506,
+          "message": "The key file is not a valid format."
+        },
+        {
+          "code": 507,
+          "message": "It cannot get the valid time information."
+        },
+        {
+          "code": 599,
+          "message": "It's an unknown error."
+        }
       ],
       "examples": [
         {
@@ -283,7 +380,7 @@
     {
       "name": "getRightsError",
       "description": "DRM 라이선스 오류가 발생했을 때 오류 정보를 반환합니다. subscribe=true로 구독 시 오류 이벤트를 수신합니다. (PlayReady 지원)",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
         {
@@ -330,23 +427,70 @@
           "name": "rightsErrorEvent",
           "description": "라이선스 오류 이벤트 페이로드",
           "properties": [
-            { "name": "errorState", "type": "string", "required": false, "description": "오류 코드 (0: No license, 1: Invalid license)" },
-            { "name": "contentId", "type": "string", "required": false, "description": "오류를 발생시킨 DRM 시스템 내 콘텐츠 ID" },
-            { "name": "drmSystemId", "type": "string", "required": false, "description": "DRM 시스템 ID (예: PlayReady)" },
-            { "name": "rightsIssuerUrl", "type": "string", "required": false, "description": "라이선스 서버 URL" }
+            {
+              "name": "errorState",
+              "type": "string",
+              "required": false,
+              "description": "오류 코드 (0: No license, 1: Invalid license)"
+            },
+            {
+              "name": "contentId",
+              "type": "string",
+              "required": false,
+              "description": "오류를 발생시킨 DRM 시스템 내 콘텐츠 ID"
+            },
+            {
+              "name": "drmSystemId",
+              "type": "string",
+              "required": false,
+              "description": "DRM 시스템 ID (예: PlayReady)"
+            },
+            {
+              "name": "rightsIssuerUrl",
+              "type": "string",
+              "required": false,
+              "description": "라이선스 서버 URL"
+            }
           ]
         }
       },
       "errors": [
-        { "code": 500, "message": "Vendor managed error" },
-        { "code": 501, "message": "This API is not supported in the activated DRM." },
-        { "code": 502, "message": "There is no process matching to input clientId." },
-        { "code": 503, "message": "It cannot find a key file in the DRM store." },
-        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
-        { "code": 505, "message": "It's not supporting drmType." },
-        { "code": 506, "message": "The key file is not a valid format." },
-        { "code": 507, "message": "It cannot get the valid time information." },
-        { "code": 599, "message": "It's an unknown error." }
+        {
+          "code": 500,
+          "message": "Vendor managed error"
+        },
+        {
+          "code": 501,
+          "message": "This API is not supported in the activated DRM."
+        },
+        {
+          "code": 502,
+          "message": "There is no process matching to input clientId."
+        },
+        {
+          "code": 503,
+          "message": "It cannot find a key file in the DRM store."
+        },
+        {
+          "code": 504,
+          "message": "A part of whole parameters is not valid data or format."
+        },
+        {
+          "code": 505,
+          "message": "It's not supporting drmType."
+        },
+        {
+          "code": 506,
+          "message": "The key file is not a valid format."
+        },
+        {
+          "code": 507,
+          "message": "It cannot get the valid time information."
+        },
+        {
+          "code": 599,
+          "message": "It's an unknown error."
+        }
       ],
       "examples": [
         {
@@ -378,7 +522,8 @@
           "    }",
           "});"
         ],
-        "description": "DRM 클라이언트 생성"
+        "description": "DRM 클라이언트 생성",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-drm-sendmessage",
@@ -403,7 +548,8 @@
           "    }",
           "});"
         ],
-        "description": "DRM 메시지 전송"
+        "description": "DRM 메시지 전송",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-drm-rights-error",
@@ -424,23 +570,73 @@
           "    }",
           "});"
         ],
-        "description": "DRM 권한 오류 구독"
+        "description": "DRM 권한 오류 구독",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
-      { "label": "load", "kind": "Method", "documentation": "DRM 클라이언트 생성", "insertText": "load", "detail": "DRM" },
-      { "label": "unload", "kind": "Method", "documentation": "DRM 클라이언트 해제", "insertText": "unload", "detail": "DRM" },
-      { "label": "isLoaded", "kind": "Method", "documentation": "DRM 클라이언트 존재 여부 확인", "insertText": "isLoaded", "detail": "DRM" },
-      { "label": "sendDrmMessage", "kind": "Method", "documentation": "DRM 메시지 전송", "insertText": "sendDrmMessage", "detail": "DRM" },
-      { "label": "getRightsError", "kind": "Method", "documentation": "DRM 라이선스 오류 구독", "insertText": "getRightsError", "detail": "DRM" }
+      {
+        "label": "load",
+        "kind": "Method",
+        "documentation": "DRM 클라이언트 생성",
+        "insertText": "load",
+        "detail": "DRM"
+      },
+      {
+        "label": "unload",
+        "kind": "Method",
+        "documentation": "DRM 클라이언트 해제",
+        "insertText": "unload",
+        "detail": "DRM"
+      },
+      {
+        "label": "isLoaded",
+        "kind": "Method",
+        "documentation": "DRM 클라이언트 존재 여부 확인",
+        "insertText": "isLoaded",
+        "detail": "DRM"
+      },
+      {
+        "label": "sendDrmMessage",
+        "kind": "Method",
+        "documentation": "DRM 메시지 전송",
+        "insertText": "sendDrmMessage",
+        "detail": "DRM"
+      },
+      {
+        "label": "getRightsError",
+        "kind": "Method",
+        "documentation": "DRM 라이선스 오류 구독",
+        "insertText": "getRightsError",
+        "detail": "DRM"
+      }
     ],
     "diagnostics": [
       {
         "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.drm'",
         "checks": [
-          { "field": "method", "validValues": ["load", "unload", "isLoaded", "sendDrmMessage", "getRightsError"], "required": true, "type": "string" },
-          { "field": "parameters.clientId", "required": false, "type": "string" },
-          { "field": "parameters.drmType", "required": false, "type": "string" }
+          {
+            "field": "method",
+            "validValues": [
+              "load",
+              "unload",
+              "isLoaded",
+              "sendDrmMessage",
+              "getRightsError"
+            ],
+            "required": true,
+            "type": "string"
+          },
+          {
+            "field": "parameters.clientId",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "field": "parameters.drmType",
+            "required": false,
+            "type": "string"
+          }
         ]
       }
     ]

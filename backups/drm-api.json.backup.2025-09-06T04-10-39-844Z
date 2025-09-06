@@ -1,0 +1,448 @@
+{
+  "apiInfo": {
+    "serviceName": "DRM",
+    "serviceUri": "luna://com.webos.service.drm",
+    "category": "media",
+    "description": "DRM 클라이언트 생성/해제, DRM 메시지 전송, 라이선스 오류 구독을 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2025-01-18"
+  },
+  "methods": [
+    {
+      "name": "load",
+      "description": "주어진 DRM 타입에 대한 DRM 클라이언트 인스턴스를 생성합니다. 생성 후 다른 DRM API 사용이 가능합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "drmType",
+          "required": true,
+          "type": "string",
+          "description": "DRM 타입. PlayReady: 'playready'",
+          "enum": ["playready"]
+        },
+        {
+          "name": "appId",
+          "required": false,
+          "type": "string",
+          "description": "DRM 클라이언트를 사용하는 애플리케이션의 고유 ID"
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "clientId",
+            "type": "string",
+            "required": false,
+            "description": "생성된 DRM 클라이언트의 고유 ID (11바이트, 마지막 1바이트는 '0')"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ]
+      },
+      "errors": [
+        { "code": 500, "message": "Vendor managed error" },
+        { "code": 501, "message": "This API is not supported in the activated DRM." },
+        { "code": 502, "message": "There is no process matching to input clientId." },
+        { "code": 503, "message": "It cannot find a key file in the DRM store." },
+        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
+        { "code": 505, "message": "It's not supporting drmType." },
+        { "code": 506, "message": "The key file is not a valid format." },
+        { "code": 507, "message": "It cannot get the valid time information." },
+        { "code": 599, "message": "It's an unknown error." }
+      ],
+      "examples": [
+        {
+          "title": "DRM 클라이언트 로드",
+          "code": "var appId = 'com.yourdomain.yourapp';\nvar drmType = 'playready';\nvar request = webOS.service.request('luna://com.webos.service.drm', {\n  method: 'load',\n  parameters: { drmType: drmType, appId: appId },\n  onSuccess: function (inResponse) {\n    var clientId = inResponse.clientId;\n    console.log('DRM Client is loaded successfully.');\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "unload",
+      "description": "DRM 클라이언트 인스턴스를 제거하고 리소스를 해제합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "clientId",
+          "required": true,
+          "type": "string",
+          "description": "삭제할 DRM 클라이언트의 고유 ID"
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ]
+      },
+      "errors": [
+        { "code": 500, "message": "Vendor managed error" },
+        { "code": 501, "message": "This API is not supported in the activated DRM." },
+        { "code": 502, "message": "There is no process matching to input clientId." },
+        { "code": 503, "message": "It cannot find a key file in the DRM store." },
+        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
+        { "code": 505, "message": "It's not supporting drmType." },
+        { "code": 506, "message": "The key file is not a valid format." },
+        { "code": 507, "message": "It cannot get the valid time information." },
+        { "code": 599, "message": "It's an unknown error." }
+      ],
+      "examples": [
+        {
+          "title": "DRM 클라이언트 언로드",
+          "code": "var request = webOS.service.request('luna://com.webos.service.drm', {\n  method: 'unload',\n  parameters: { clientId: 'LE3bZyIZzY' },\n  onSuccess: function (result) {\n    console.log('DRM Client is unloaded successfully.');\n  },\n  onFailure: function (result) {\n    console.log('[' + result.errorCode + '] ' + result.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "isLoaded",
+      "description": "주어진 애플리케이션 ID에 매핑된 DRM 클라이언트가 존재하는지 확인합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "appId",
+          "required": true,
+          "type": "string",
+          "description": "DRM 클라이언트를 사용하는 애플리케이션의 고유 ID"
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "isLoaded",
+            "type": "boolean",
+            "required": false,
+            "description": "해당 앱 ID의 DRM 클라이언트 존재 여부"
+          },
+          {
+            "name": "clientId",
+            "type": "string",
+            "required": false,
+            "description": "존재할 경우 DRM 클라이언트 ID"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ]
+      },
+      "errors": [
+        { "code": 500, "message": "Vendor managed error" },
+        { "code": 501, "message": "This API is not supported in the activated DRM." },
+        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
+        { "code": 599, "message": "It's an unknown error." }
+      ],
+      "examples": [
+        {
+          "title": "클라이언트 로드 여부 확인",
+          "code": "var request = webOS.service.request('luna://com.webos.service.drm', {\n  method: 'isLoaded',\n  parameters: { appId: 'com.yourdomain.yourapp' },\n  onSuccess: function (inResponse) {\n    console.log('Loaded:', inResponse.isLoaded, 'clientId:', inResponse.clientId);\n  },\n  onFailure: function (inError) {\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "sendDrmMessage",
+      "description": "DRM 시스템에서 정의한 메시지 타입을 사용하여 DRM 서비스로 메시지를 전송합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "clientId",
+          "required": true,
+          "type": "string",
+          "description": "DRM 클라이언트 ID"
+        },
+        {
+          "name": "msgType",
+          "required": true,
+          "type": "string",
+          "description": "DRM 메시지 타입 (예: PlayReady 'application/vnd.ms-playready.initiator+xml')"
+        },
+        {
+          "name": "msg",
+          "required": true,
+          "type": "string",
+          "description": "DRM 시스템별 메시지 바디"
+        },
+        {
+          "name": "drmSystemId",
+          "required": true,
+          "type": "string",
+          "description": "DRM 시스템 ID (예: PlayReady 'urn:dvb:casystemid:19219')"
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "msgId",
+            "type": "string",
+            "required": false,
+            "description": "전송된 DRM 메시지 ID"
+          },
+          {
+            "name": "resultCode",
+            "type": "number",
+            "required": false,
+            "description": "DRM 시스템에서 반환한 결과 코드"
+          },
+          {
+            "name": "resultMsg",
+            "type": "string",
+            "required": false,
+            "description": "DRM 시스템에서 반환한 결과 메시지"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ]
+      },
+      "errors": [
+        { "code": 500, "message": "Vendor managed error" },
+        { "code": 501, "message": "This API is not supported in the activated DRM." },
+        { "code": 502, "message": "There is no process matching to input clientId." },
+        { "code": 503, "message": "It cannot find a key file in the DRM store." },
+        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
+        { "code": 505, "message": "It's not supporting drmType." },
+        { "code": 506, "message": "The key file is not a valid format." },
+        { "code": 507, "message": "It cannot get the valid time information." },
+        { "code": 599, "message": "It's an unknown error." }
+      ],
+      "examples": [
+        {
+          "title": "PlayReady 메시지 전송",
+          "code": "var msg = '<?xml version=\"1.0\" encoding=\"utf-8\"?>\\n<PlayReadyInitiator xmlns= \"http://schemas.microsoft.com/DRM/2007/03/protocols/\">\\n  <LicenseAcquisition>\\n    <Header>\\n      <WRMHEADER xmlns= \"http://schemas.microsoft.com/DRM/2007/03/PlayReadyHeader\" version=\"4.0.0.0\">\\n        <DATA>\\n          <PROTECTINFO>\\n            <KEYLEN>16</KEYLEN>\\n            <ALGID>AESCTR</ALGID>\\n          </PROTECTINFO>\\n          <LA_URL>http://rm.contoso.com/rightsmanager.asmx</LA_URL>\\n          <KID>lFmb2gxg0Cr5bfEnJXgJeA==</KID>\\n          <CHECKSUM>P7ORpD2IpA==</CHECKSUM>\\n        </DATA>\\n      </WRMHEADER>\\n    </Header>\\n    <CustomData>AuthZToken XYZ</CustomData>\\n  </LicenseAcquisition>\\n</PlayReadyInitiator>';\nvar msgType = 'application/vnd.ms-playready.initiator+xml';\nvar drmSystemId = 'urn:dvb:casystemid:19219';\nvar request = webOS.service.request('luna://com.webos.service.drm', {\n  method: 'sendDrmMessage',\n  parameters: { clientId: clientId, msgType: msgType, msg: msg, drmSystemId: drmSystemId },\n  onSuccess: function (result) {\n    console.log('Message ID:', result.msgId);\n    console.log('[' + result.resultCode + '] ' + result.resultMsg);\n  },\n  onFailure: function (result) {\n    console.log('[' + result.errorCode + '] ' + result.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "getRightsError",
+      "description": "DRM 라이선스 오류가 발생했을 때 오류 정보를 반환합니다. subscribe=true로 구독 시 오류 이벤트를 수신합니다. (PlayReady 지원)",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "clientId",
+          "required": true,
+          "type": "string",
+          "description": "DRM 클라이언트 ID"
+        },
+        {
+          "name": "subscribe",
+          "required": true,
+          "type": "boolean",
+          "description": "구독 여부. true: 구독, false: 비구독 (현재 false 시 오류 발생 가능)"
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "subscribed",
+            "type": "boolean",
+            "required": true,
+            "description": "구독 활성화 여부"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ],
+        "subscription": {
+          "name": "rightsErrorEvent",
+          "description": "라이선스 오류 이벤트 페이로드",
+          "properties": [
+            { "name": "errorState", "type": "string", "required": false, "description": "오류 코드 (0: No license, 1: Invalid license)" },
+            { "name": "contentId", "type": "string", "required": false, "description": "오류를 발생시킨 DRM 시스템 내 콘텐츠 ID" },
+            { "name": "drmSystemId", "type": "string", "required": false, "description": "DRM 시스템 ID (예: PlayReady)" },
+            { "name": "rightsIssuerUrl", "type": "string", "required": false, "description": "라이선스 서버 URL" }
+          ]
+        }
+      },
+      "errors": [
+        { "code": 500, "message": "Vendor managed error" },
+        { "code": 501, "message": "This API is not supported in the activated DRM." },
+        { "code": 502, "message": "There is no process matching to input clientId." },
+        { "code": 503, "message": "It cannot find a key file in the DRM store." },
+        { "code": 504, "message": "A part of whole parameters is not valid data or format." },
+        { "code": 505, "message": "It's not supporting drmType." },
+        { "code": 506, "message": "The key file is not a valid format." },
+        { "code": 507, "message": "It cannot get the valid time information." },
+        { "code": 599, "message": "It's an unknown error." }
+      ],
+      "examples": [
+        {
+          "title": "권한 오류 구독",
+          "code": "var subscriptionHandler;\nvar request = webOS.service.request('luna://com.webos.service.drm', { \n  method: 'getRightsError',\n  parameters: { clientId: clientId, subscribe: true },\n  onSuccess: function (result) { // Subscription callback\n    if (result.errorState === '0') {\n      console.log('No license');\n    } else if (result.errorState === '1') {\n      console.log('Invalid license');\n    }\n    console.log('DRM System ID:', result.drmSystemId);\n    console.log('License Server URL:', result.rightsIssuerUrl);\n  },\n  onFailure: function (result) {\n    console.log('[' + result.errorCode + '] ' + result.errorText);\n  }\n});\nsubscriptionHandler = request;",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-drm-load",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.drm', {",
+          "    method: 'load',",
+          "    parameters: {",
+          "        drmType: 'playready',",
+          "        appId: '${1:com.yourdomain.yourapp}'",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        console.log('DRM client ID:', inResponse.clientId);",
+          "        ${2:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "DRM 클라이언트 생성"
+      },
+      {
+        "prefix": "webos-drm-sendmessage",
+        "body": [
+          "const msg = '<PlayReadyInitiator>...</PlayReadyInitiator>';",
+          "webOS.service.request('luna://com.webos.service.drm', {",
+          "    method: 'sendDrmMessage',",
+          "    parameters: {",
+          "        clientId: '${1:CLIENT_ID}',",
+          "        msgType: 'application/vnd.ms-playready.initiator+xml',",
+          "        msg: msg,",
+          "        drmSystemId: 'urn:dvb:casystemid:19219'",
+          "    },",
+          "    onSuccess: function (result) {",
+          "        console.log('Message ID:', result.msgId);",
+          "        console.log('[' + result.resultCode + '] ' + result.resultMsg);",
+          "        ${2:// Success handling}",
+          "    },",
+          "    onFailure: function (result) {",
+          "        console.log('[' + result.errorCode + '] ' + result.errorText);",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "DRM 메시지 전송"
+      },
+      {
+        "prefix": "webos-drm-rights-error",
+        "body": [
+          "const req = webOS.service.request('luna://com.webos.service.drm', {",
+          "    method: 'getRightsError',",
+          "    parameters: {",
+          "        clientId: '${1:CLIENT_ID}',",
+          "        subscribe: true",
+          "    },",
+          "    onSuccess: function (result) {",
+          "        console.log('Rights error:', result);",
+          "        ${2:// Handle licensing error}",
+          "    },",
+          "    onFailure: function (result) {",
+          "        console.log('[' + result.errorCode + '] ' + result.errorText);",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "DRM 권한 오류 구독"
+      }
+    ],
+    "completionItems": [
+      { "label": "load", "kind": "Method", "documentation": "DRM 클라이언트 생성", "insertText": "load", "detail": "DRM" },
+      { "label": "unload", "kind": "Method", "documentation": "DRM 클라이언트 해제", "insertText": "unload", "detail": "DRM" },
+      { "label": "isLoaded", "kind": "Method", "documentation": "DRM 클라이언트 존재 여부 확인", "insertText": "isLoaded", "detail": "DRM" },
+      { "label": "sendDrmMessage", "kind": "Method", "documentation": "DRM 메시지 전송", "insertText": "sendDrmMessage", "detail": "DRM" },
+      { "label": "getRightsError", "kind": "Method", "documentation": "DRM 라이선스 오류 구독", "insertText": "getRightsError", "detail": "DRM" }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.drm'",
+        "checks": [
+          { "field": "method", "validValues": ["load", "unload", "isLoaded", "sendDrmMessage", "getRightsError"], "required": true, "type": "string" },
+          { "field": "parameters.clientId", "required": false, "type": "string" },
+          { "field": "parameters.drmType", "required": false, "type": "string" }
+        ]
+      }
+    ]
+  }
+}

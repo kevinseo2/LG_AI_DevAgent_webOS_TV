@@ -5,7 +5,9 @@
     "category": "system",
     "description": "지정한 앱 ID로 애플리케이션을 실행하거나, 앱 설치 여부를 확인하는 메서드를 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
@@ -50,34 +52,118 @@
         ]
       },
       "errors": [
-        { "code": -1, "message": "General errors." },
-        { "code": -2, "message": "Fail to read schema." },
-        { "code": -3, "message": "No free memory." },
-        { "code": -4, "message": "Failed to allocate memory while launching an app." },
-        { "code": -5, "message": "File download is not supported." },
-        { "code": -6, "message": "No handler for target URI." },
-        { "code": -101, "message": "The app was not found." },
-        { "code": -102, "message": "The app has been locked." },
-        { "code": -103, "message": "Security checks verified failed." },
-        { "code": -104, "message": "Cannot launch a privileged app on development mode from developer apps path." },
-        { "code": -105, "message": "Invalid id is specified." },
-        { "code": -106, "message": "Unsupported app type." },
-        { "code": -107, "message": "Cannot launch the last app by killing a foreground app when another app is launched." },
-        { "code": -201, "message": "Waiting for a native app." },
-        { "code": -202, "message": "Failed to native app launch process." },
-        { "code": -203, "message": "The native app is already launching." },
-        { "code": -300, "message": "General Callchain errors." },
-        { "code": -301, "message": "Failed to download RO (Right Objects)." },
-        { "code": -302, "message": "Failed to check DRM." },
-        { "code": -303, "message": "Failed to check App Signing." },
-        { "code": -304, "message": "Failed to get setting value." },
-        { "code": -305, "message": "Failed to match Pincode." },
-        { "code": -306, "message": "Pin is not matched." },
-        { "code": -307, "message": "Failed to send launch event." },
-        { "code": -308, "message": "Failed to find LaunchPoint." },
-        { "code": -309, "message": "Failed to register kind to DB." },
-        { "code": -310, "message": "Failed to register Permission." },
-        { "code": -311, "message": "EULA errors." }
+        {
+          "code": -1,
+          "message": "General errors."
+        },
+        {
+          "code": -2,
+          "message": "Fail to read schema."
+        },
+        {
+          "code": -3,
+          "message": "No free memory."
+        },
+        {
+          "code": -4,
+          "message": "Failed to allocate memory while launching an app."
+        },
+        {
+          "code": -5,
+          "message": "File download is not supported."
+        },
+        {
+          "code": -6,
+          "message": "No handler for target URI."
+        },
+        {
+          "code": -101,
+          "message": "The app was not found."
+        },
+        {
+          "code": -102,
+          "message": "The app has been locked."
+        },
+        {
+          "code": -103,
+          "message": "Security checks verified failed."
+        },
+        {
+          "code": -104,
+          "message": "Cannot launch a privileged app on development mode from developer apps path."
+        },
+        {
+          "code": -105,
+          "message": "Invalid id is specified."
+        },
+        {
+          "code": -106,
+          "message": "Unsupported app type."
+        },
+        {
+          "code": -107,
+          "message": "Cannot launch the last app by killing a foreground app when another app is launched."
+        },
+        {
+          "code": -201,
+          "message": "Waiting for a native app."
+        },
+        {
+          "code": -202,
+          "message": "Failed to native app launch process."
+        },
+        {
+          "code": -203,
+          "message": "The native app is already launching."
+        },
+        {
+          "code": -300,
+          "message": "General Callchain errors."
+        },
+        {
+          "code": -301,
+          "message": "Failed to download RO (Right Objects)."
+        },
+        {
+          "code": -302,
+          "message": "Failed to check DRM."
+        },
+        {
+          "code": -303,
+          "message": "Failed to check App Signing."
+        },
+        {
+          "code": -304,
+          "message": "Failed to get setting value."
+        },
+        {
+          "code": -305,
+          "message": "Failed to match Pincode."
+        },
+        {
+          "code": -306,
+          "message": "Pin is not matched."
+        },
+        {
+          "code": -307,
+          "message": "Failed to send launch event."
+        },
+        {
+          "code": -308,
+          "message": "Failed to find LaunchPoint."
+        },
+        {
+          "code": -309,
+          "message": "Failed to register kind to DB."
+        },
+        {
+          "code": -310,
+          "message": "Failed to register Permission."
+        },
+        {
+          "code": -311,
+          "message": "EULA errors."
+        }
       ],
       "examples": [
         {
@@ -134,7 +220,10 @@
         ]
       },
       "errors": [
-        { "code": 1, "message": "Invalid appId specified. This error is returned when the appId parameter is empty." }
+        {
+          "code": 1,
+          "message": "Invalid appId specified. This error is returned when the appId parameter is empty."
+        }
       ],
       "examples": [
         {
@@ -172,7 +261,8 @@
           "    }",
           "});"
         ],
-        "description": "Application Manager의 launch 메서드 호출"
+        "description": "Application Manager의 launch 메서드 호출",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-app-exists",
@@ -193,7 +283,8 @@
           "    }",
           "});"
         ],
-        "description": "Application Manager의 getAppLoadStatus 메서드 호출"
+        "description": "Application Manager의 getAppLoadStatus 메서드 호출",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
@@ -216,9 +307,25 @@
       {
         "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.applicationManager'",
         "checks": [
-          { "field": "method", "validValues": ["launch", "getAppLoadStatus"], "required": true, "type": "string" },
-          { "field": "parameters.id", "required": false, "type": "string" },
-          { "field": "parameters.appId", "required": false, "type": "string" }
+          {
+            "field": "method",
+            "validValues": [
+              "launch",
+              "getAppLoadStatus"
+            ],
+            "required": true,
+            "type": "string"
+          },
+          {
+            "field": "parameters.id",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "field": "parameters.appId",
+            "required": false,
+            "type": "string"
+          }
         ]
       }
     ]

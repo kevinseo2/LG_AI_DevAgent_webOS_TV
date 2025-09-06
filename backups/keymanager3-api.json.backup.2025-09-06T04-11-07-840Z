@@ -1,0 +1,207 @@
+{
+  "apiInfo": {
+    "serviceName": "Keymanager3",
+    "serviceUri": "luna://com.webos.service.keymanager3",
+    "category": "system",
+    "description": "키 생성/삭제, 암복호화, 서명 생성/검증 등 키 관리 기능을 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2025-01-18"
+  },
+  "methods": [
+    {
+      "name": "generateKey",
+      "description": "대칭/비대칭 키를 생성합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        { "name": "keyAlias", "required": true, "type": "string", "description": "키 별칭(저장용 식별자)" },
+        { "name": "algorithm", "required": true, "type": "string", "description": "알고리즘", "enum": ["AES", "HMAC", "RSA"] },
+        { "name": "keySize", "required": false, "type": "number", "description": "키 길이(비대칭/대칭 알고리즘에 따라 유효 범위 상이)" },
+        { "name": "purpose", "required": false, "type": "array", "description": "키 용도", "enum": ["encrypt", "decrypt", "sign", "verify", "wrap", "unwrap"] }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "keyAlias", "type": "string", "required": false, "description": "생성된 키 별칭" },
+          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
+          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "AES 키 생성",
+          "code": "webOS.service.request('luna://com.webos.service.keymanager3', {\n  method: 'generateKey',\n  parameters: { keyAlias: 'myAES', algorithm: 'AES', keySize: 256, purpose: ['encrypt','decrypt'] },\n  onSuccess: function(r){ console.log('alias:', r.keyAlias); },\n  onFailure: function(e){ console.log('['+e.errorCode+'] '+e.errorText); }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "deleteKey",
+      "description": "지정한 별칭의 키를 삭제합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        { "name": "keyAlias", "required": true, "type": "string", "description": "삭제할 키 별칭" }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
+          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "키 삭제",
+          "code": "webOS.service.request('luna://com.webos.service.keymanager3', {\n  method: 'deleteKey',\n  parameters: { keyAlias: 'myAES' },\n  onSuccess: function(r){ console.log('deleted'); },\n  onFailure: function(e){ console.log('['+e.errorCode+'] '+e.errorText); }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "encrypt",
+      "description": "데이터를 암호화합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        { "name": "keyAlias", "required": true, "type": "string", "description": "키 별칭" },
+        { "name": "plain", "required": true, "type": "string", "description": "평문(베이스64 또는 UTF-8)" },
+        { "name": "iv", "required": false, "type": "string", "description": "초기화 벡터(Base64). 알고리즘에 따라 필요" }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "cipher", "type": "string", "required": false, "description": "암호문(Base64)" },
+          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
+          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "암호화",
+          "code": "webOS.service.request('luna://com.webos.service.keymanager3', {\n  method: 'encrypt',\n  parameters: { keyAlias: 'myAES', plain: 'SGVsbG8=', iv: 'AAAAAAAAAAAAAAAAAAAAAA==' },\n  onSuccess: function(r){ console.log('cipher:', r.cipher); },\n  onFailure: function(e){ console.log('['+e.errorCode+'] '+e.errorText); }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "decrypt",
+      "description": "데이터를 복호화합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        { "name": "keyAlias", "required": true, "type": "string", "description": "키 별칭" },
+        { "name": "cipher", "required": true, "type": "string", "description": "암호문(Base64)" },
+        { "name": "iv", "required": false, "type": "string", "description": "초기화 벡터(Base64). 알고리즘에 따라 필요" }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "plain", "type": "string", "required": false, "description": "평문(Base64 또는 UTF-8)" },
+          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
+          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "복호화",
+          "code": "webOS.service.request('luna://com.webos.service.keymanager3', {\n  method: 'decrypt',\n  parameters: { keyAlias: 'myAES', cipher: '...', iv: 'AAAAAAAAAAAAAAAAAAAAAA==' },\n  onSuccess: function(r){ console.log('plain:', r.plain); },\n  onFailure: function(e){ console.log('['+e.errorCode+'] '+e.errorText); }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "sign",
+      "description": "서명을 생성합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        { "name": "keyAlias", "required": true, "type": "string", "description": "개인키 별칭" },
+        { "name": "message", "required": true, "type": "string", "description": "서명할 데이터(Base64 또는 UTF-8)" },
+        { "name": "algorithm", "required": false, "type": "string", "description": "서명 알고리즘 (예: RSASSA-PKCS1-v1_5, HMAC-SHA256)" }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "signature", "type": "string", "required": false, "description": "서명(Base64)" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "서명 생성",
+          "code": "webOS.service.request('luna://com.webos.service.keymanager3', {\n  method: 'sign',\n  parameters: { keyAlias: 'myRSA', message: 'SGVsbG8=', algorithm: 'RSASSA-PKCS1-v1_5' },\n  onSuccess: function(r){ console.log('signature:', r.signature); }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "verify",
+      "description": "서명을 검증합니다.",
+      "emulatorSupport": false,
+      "deprecated": false,
+      "parameters": [
+        { "name": "keyAlias", "required": true, "type": "string", "description": "공개키 별칭" },
+        { "name": "message", "required": true, "type": "string", "description": "원문(Base64 또는 UTF-8)" },
+        { "name": "signature", "required": true, "type": "string", "description": "서명(Base64)" },
+        { "name": "algorithm", "required": false, "type": "string", "description": "검증 알고리즘" }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "verified", "type": "boolean", "required": false, "description": "검증 결과" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "서명 검증",
+          "code": "webOS.service.request('luna://com.webos.service.keymanager3', {\n  method: 'verify',\n  parameters: { keyAlias: 'myRSA', message: 'SGVsbG8=', signature: '...', algorithm: 'RSASSA-PKCS1-v1_5' },\n  onSuccess: function(r){ console.log('verified:', r.verified); }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-km3-generate",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.keymanager3', {",
+          "    method: 'generateKey',",
+          "    parameters: {",
+          "        keyAlias: '${1:alias}',",
+          "        algorithm: '${2|AES,HMAC,RSA|}',",
+          "        keySize: ${3:256},",
+          "        purpose: ['${4|encrypt,decrypt,sign,verify,wrap,unwrap|}']",
+          "    },",
+          "    onSuccess: function (r) {",
+          "        console.log('alias:', r.keyAlias);",
+          "    }",
+          "});"
+        ],
+        "description": "Keymanager3 키 생성"
+      }
+    ],
+    "completionItems": [
+      { "label": "generateKey", "kind": "Method", "documentation": "키 생성", "insertText": "generateKey", "detail": "Keymanager3" },
+      { "label": "deleteKey", "kind": "Method", "documentation": "키 삭제", "insertText": "deleteKey", "detail": "Keymanager3" },
+      { "label": "encrypt", "kind": "Method", "documentation": "암호화", "insertText": "encrypt", "detail": "Keymanager3" },
+      { "label": "decrypt", "kind": "Method", "documentation": "복호화", "insertText": "decrypt", "detail": "Keymanager3" },
+      { "label": "sign", "kind": "Method", "documentation": "서명 생성", "insertText": "sign", "detail": "Keymanager3" },
+      { "label": "verify", "kind": "Method", "documentation": "서명 검증", "insertText": "verify", "detail": "Keymanager3" }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.keymanager3'",
+        "checks": [
+          { "field": "method", "validValues": ["generateKey","deleteKey","encrypt","decrypt","sign","verify"], "required": true, "type": "string" }
+        ]
+      }
+    ]
+  }
+}

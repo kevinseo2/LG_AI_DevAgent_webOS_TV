@@ -5,7 +5,9 @@
     "category": "system",
     "description": "시스템의 다양한 부분을 모니터링하고, 해당 이벤트가 발생할 때 서비스를 시작합니다. Activity Manager는 시스템에서 작업을 조정하는 역할을 담당하며, 현재 수행 중인 작업과 향후 수행될 예정인 작업을 포함합니다. 제어의 기본 단위는 Activity로, 이메일 계정 동기화나 게임 플레이와 같은 시스템의 특정 작업 항목을 나타냅니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
@@ -434,7 +436,8 @@
           "    }",
           "});"
         ],
-        "description": "Activity Manager의 adopt 메서드 호출"
+        "description": "Activity Manager의 adopt 메서드 호출",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-activity-create",
@@ -465,7 +468,8 @@
           "    }",
           "});"
         ],
-        "description": "Activity Manager의 create 메서드 호출"
+        "description": "Activity Manager의 create 메서드 호출",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
@@ -525,7 +529,15 @@
         "checks": [
           {
             "field": "method",
-            "validValues": ["adopt", "cancel", "complete", "create", "release", "start", "stop"],
+            "validValues": [
+              "adopt",
+              "cancel",
+              "complete",
+              "create",
+              "release",
+              "start",
+              "stop"
+            ],
             "required": true,
             "type": "string"
           }

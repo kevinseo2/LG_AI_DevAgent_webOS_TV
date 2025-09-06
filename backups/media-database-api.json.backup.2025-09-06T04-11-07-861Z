@@ -1,0 +1,119 @@
+{
+  "apiInfo": {
+    "serviceName": "Media Database",
+    "serviceUri": "luna://com.webos.service.mediadb",
+    "category": "media",
+    "description": "앱이 대용량 미디어 관련 데이터셋을 지속적으로 저장/조회할 수 있도록 합니다.",
+    "version": "1.0",
+    "lastUpdated": "2025-01-18"
+  },
+  "methods": [
+    {
+      "name": "putMediaMetaData",
+      "description": "미디어 메타데이터를 데이터베이스에 저장합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "mediaMetaData",
+          "required": true,
+          "type": "object",
+          "description": "저장할 미디어 메타데이터 객체"
+        }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "미디어 메타데이터 저장",
+          "code": "var request = webOS.service.request('luna://com.webos.service.mediadb', {\n  method: 'putMediaMetaData',\n  parameters: {\n    mediaMetaData: { uri: '/media/videos/movie.mp4', title: 'My Movie', duration: 120000 }\n  },\n  onSuccess: function (inResponse) {\n    console.log('Media metadata saved successfully');\n  },\n  onFailure: function (inError) {\n    console.log('Save metadata failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "getMediaMetaData",
+      "description": "미디어 메타데이터를 조회합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        { "name": "uri", "required": true, "type": "string", "description": "조회할 미디어 파일의 URI" }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "mediaMetaData", "type": "object", "required": false, "description": "조회된 미디어 메타데이터" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "미디어 메타데이터 조회",
+          "code": "var request = webOS.service.request('luna://com.webos.service.mediadb', {\n  method: 'getMediaMetaData',\n  parameters: { uri: '/media/videos/movie.mp4' },\n  onSuccess: function (inResponse) {\n    console.log('Media metadata:', inResponse.mediaMetaData);\n  },\n  onFailure: function (inError) {\n    console.log('Get metadata failed:', inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-media-db-put",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.mediadb', {",
+          "    method: 'putMediaMetaData',",
+          "    parameters: {",
+          "        mediaMetaData: {",
+          "            uri: '${1:/media/path}',",
+          "            title: '${2:title}',",
+          "            duration: ${3:0}",
+          "        }",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        ${4:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${5:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "미디어 메타데이터 저장"
+      },
+      {
+        "prefix": "webos-media-db-get",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.mediadb', {",
+          "    method: 'getMediaMetaData',",
+          "    parameters: {",
+          "        uri: '${1:/media/videos/movie.mp4}'",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        console.log('Media metadata:', inResponse.mediaMetaData);",
+          "        ${2:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "미디어 메타데이터 조회"
+      }
+    ],
+    "completionItems": [
+      { "label": "putMediaMetaData", "kind": "Method", "documentation": "미디어 메타데이터 저장", "insertText": "putMediaMetaData", "detail": "Media Database" },
+      { "label": "getMediaMetaData", "kind": "Method", "documentation": "미디어 메타데이터 조회", "insertText": "getMediaMetaData", "detail": "Media Database" }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.mediadb'",
+        "checks": [
+          { "field": "method", "validValues": ["putMediaMetaData", "getMediaMetaData"], "required": true, "type": "string" }
+        ]
+      }
+    ]
+  }
+}

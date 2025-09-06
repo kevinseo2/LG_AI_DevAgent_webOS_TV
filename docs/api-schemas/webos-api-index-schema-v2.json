@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://webostv.developer.lge.com/schemas/webos-api-index-schema-v2.json",
+  "title": "webOS TV Luna Service API Index Schema v2.0",
+  "description": "webOS TV Luna Service API 인덱스 정의를 위한 표준 스키마",
+  "type": "object",
+  "required": ["webOSTV_APIs"],
+  "properties": {
+        "webOSTV_APIs": {
+          "type": "object",
+          "required": ["version", "lastUpdated", "description", "apis"],
+          "additionalProperties": true,
+          "properties": {
+        "version": {
+          "type": "string",
+          "description": "API 인덱스 버전",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "마지막 업데이트 날짜 (YYYY-MM-DD 형식)",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "description": {
+          "type": "string",
+          "description": "API 인덱스 설명",
+          "minLength": 10,
+          "maxLength": 200
+        },
+        "apis": {
+          "type": "array",
+          "description": "API 목록",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["serviceName", "fileName", "serviceUri", "category", "description", "status"],
+            "additionalProperties": true,
+            "properties": {
+              "serviceName": {
+                "type": "string",
+                "description": "서비스 이름",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "fileName": {
+                "type": "string",
+                "description": "API 파일명",
+                "pattern": "^[a-zA-Z0-9-]+\\.json$"
+              },
+              "serviceUri": {
+                "type": "string",
+                "description": "Luna Service URI",
+                "pattern": "^luna://[a-zA-Z0-9.-]+$"
+              },
+              "category": {
+                "type": "string",
+                "description": "API 카테고리",
+                "enum": ["media", "system", "network", "device", "security", "application", "other"]
+              },
+              "description": {
+                "type": "string",
+                "description": "서비스 설명",
+                "minLength": 10,
+                "maxLength": 500
+              },
+              "status": {
+                "type": "string",
+                "description": "API 상태",
+                "enum": ["active", "deprecated", "experimental", "removed"]
+              },
+              "webosVersion": {
+                "type": "string",
+                "description": "지원하는 webOS 버전",
+                "pattern": "^\\d+\\.x$",
+                "default": "6.x"
+              },
+              "lastUpdated": {
+                "type": "string",
+                "description": "마지막 업데이트 날짜",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "methodCount": {
+                "type": "number",
+                "description": "메서드 개수",
+                "minimum": 0
+              },
+              "deprecatedMethodCount": {
+                "type": "number",
+                "description": "더 이상 사용되지 않는 메서드 개수",
+                "minimum": 0,
+                "default": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "statistics": {
+          "type": "object",
+          "description": "API 통계 정보",
+          "properties": {
+            "totalAPIs": {
+              "type": "number",
+              "description": "전체 API 개수",
+              "minimum": 0
+            },
+            "activeAPIs": {
+              "type": "number",
+              "description": "활성 API 개수",
+              "minimum": 0
+            },
+            "deprecatedAPIs": {
+              "type": "number",
+              "description": "더 이상 사용되지 않는 API 개수",
+              "minimum": 0
+            },
+            "totalMethods": {
+              "type": "number",
+              "description": "전체 메서드 개수",
+              "minimum": 0
+            },
+            "categories": {
+              "type": "object",
+              "description": "카테고리별 API 개수",
+              "patternProperties": {
+                "^[a-zA-Z]+$": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

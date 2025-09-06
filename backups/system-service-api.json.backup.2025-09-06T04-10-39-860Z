@@ -1,0 +1,90 @@
+{
+  "apiInfo": {
+    "serviceName": "System Service",
+    "serviceUri": "luna://com.webos.service.systemservice",
+    "category": "system",
+    "description": "시스템 시간 정보를 조회/설정하는 메서드를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2025-01-18"
+  },
+  "methods": [
+    {
+      "name": "getTime",
+      "description": "현재 시스템 시간을 조회합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        { "name": "subscribe", "required": false, "type": "boolean", "description": "시간 변경 구독 여부", "defaultValue": false }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "utc", "type": "number", "required": true, "description": "UTC 시간(ms)" },
+          { "name": "localtime", "type": "object", "required": true, "description": "로컬 시간 정보" },
+          { "name": "timezone", "type": "string", "required": true, "description": "시간대" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "시스템 시간 조회",
+          "code": "webOS.service.request('luna://com.webos.service.systemservice', {\n  method: 'getTime',\n  parameters: { subscribe: false },\n  onSuccess: function (inResponse) {\n    console.log('UTC:', inResponse.utc);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "setTime",
+      "description": "시스템 시간을 설정합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        { "name": "utc", "required": true, "type": "number", "description": "설정할 UTC 시간(ms)" }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }
+        ]
+      },
+      "errors": [],
+      "examples": [
+        {
+          "title": "시스템 시간 설정",
+          "code": "webOS.service.request('luna://com.webos.service.systemservice', {\n  method: 'setTime',\n  parameters: { utc: Date.now() },\n  onSuccess: function () {\n    console.log('Time set successfully');\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-system-gettime",
+        "body": [
+          "webOS.service.request('luna://com.webos.service.systemservice', {",
+          "    method: 'getTime',",
+          "    parameters: {",
+          "        subscribe: ${1:false}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        console.log('UTC:', inResponse.utc);",
+          "    }",
+          "});"
+        ],
+        "description": "시스템 시간 조회"
+      }
+    ],
+    "completionItems": [
+      { "label": "getTime", "kind": "Method", "documentation": "시스템 시간 조회", "insertText": "getTime", "detail": "System Service" },
+      { "label": "setTime", "kind": "Method", "documentation": "시스템 시간 설정", "insertText": "setTime", "detail": "System Service" }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.systemservice'",
+        "checks": [
+          { "field": "method", "validValues": ["getTime", "setTime"], "required": true, "type": "string" }
+        ]
+      }
+    ]
+  }
+}

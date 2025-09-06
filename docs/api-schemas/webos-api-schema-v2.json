@@ -1,0 +1,331 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://webostv.developer.lge.com/schemas/webos-api-schema-v2.json",
+  "title": "webOS TV Luna Service API Schema v2.0",
+  "description": "webOS TV Luna Service API 정의를 위한 표준 스키마",
+  "type": "object",
+  "required": ["apiInfo", "methods"],
+  "properties": {
+    "apiInfo": {
+      "type": "object",
+      "required": ["serviceName", "serviceUri", "category", "description", "version", "lastUpdated"],
+      "properties": {
+        "serviceName": {
+          "type": "string",
+          "description": "서비스 이름 (예: 'Audio', 'Database')",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "serviceUri": {
+          "type": "string",
+          "description": "Luna Service URI (예: 'luna://com.webos.audio')",
+          "pattern": "^luna://[a-zA-Z0-9.-]+$"
+        },
+        "category": {
+          "type": "string",
+          "description": "API 카테고리",
+          "enum": ["media", "system", "network", "device", "security", "application", "other"]
+        },
+        "description": {
+          "type": "string",
+          "description": "서비스 설명",
+          "minLength": 10,
+          "maxLength": 500
+        },
+        "version": {
+          "type": "string",
+          "description": "API 버전",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "마지막 업데이트 날짜 (YYYY-MM-DD 형식)",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "status": {
+          "type": "string",
+          "description": "API 상태",
+          "enum": ["active", "deprecated", "experimental", "removed"],
+          "default": "active"
+        },
+        "webosVersion": {
+          "type": "string",
+          "description": "지원하는 webOS 버전",
+          "pattern": "^\\d+\\.x$",
+          "default": "6.x"
+        }
+      },
+      "additionalProperties": false
+    },
+    "methods": {
+      "type": "array",
+      "description": "API 메서드 목록",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "emulatorSupport", "deprecated", "parameters", "returns", "errors", "examples"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "메서드 이름",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[a-zA-Z][a-zA-Z0-9]*$"
+          },
+          "description": {
+            "type": "string",
+            "description": "메서드 설명",
+            "minLength": 10,
+            "maxLength": 300
+          },
+          "emulatorSupport": {
+            "type": "boolean",
+            "description": "에뮬레이터 지원 여부"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "더 이상 사용되지 않는 메서드 여부"
+          },
+          "parameters": {
+            "type": "array",
+            "description": "메서드 파라미터 목록",
+            "items": {
+              "type": "object",
+              "required": ["name", "required", "type", "description"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "파라미터 이름",
+                  "minLength": 1,
+                  "maxLength": 50
+                },
+                "required": {
+                  "type": "boolean",
+                  "description": "필수 파라미터 여부"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "파라미터 타입",
+                  "enum": ["string", "number", "boolean", "array", "object", "any"]
+                },
+                "description": {
+                  "type": "string",
+                  "description": "파라미터 설명",
+                  "minLength": 5,
+                  "maxLength": 200
+                },
+                "defaultValue": {
+                  "description": "기본값 (타입에 따라 다름)"
+                },
+                "enum": {
+                  "type": "array",
+                  "description": "허용되는 값 목록",
+                  "minItems": 1
+                },
+                "minValue": {
+                  "type": "number",
+                  "description": "최소값 (number 타입인 경우)"
+                },
+                "maxValue": {
+                  "type": "number",
+                  "description": "최대값 (number 타입인 경우)"
+                },
+                "minLength": {
+                  "type": "number",
+                  "description": "최소 길이 (string/array 타입인 경우)"
+                },
+                "maxLength": {
+                  "type": "number",
+                  "description": "최대 길이 (string/array 타입인 경우)"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "returns": {
+            "type": "object",
+            "required": ["parameters"],
+            "properties": {
+              "parameters": {
+                "type": "array",
+                "description": "반환값 파라미터 목록",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "type", "required", "description"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "반환값 이름",
+                      "minLength": 1,
+                      "maxLength": 50
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "반환값 타입",
+                      "enum": ["string", "number", "boolean", "array", "object", "any"]
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "description": "필수 반환값 여부"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "반환값 설명",
+                      "minLength": 5,
+                      "maxLength": 200
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "errors": {
+            "type": "array",
+            "description": "에러 코드 및 메시지 목록",
+            "items": {
+              "type": "object",
+              "required": ["code", "message"],
+              "properties": {
+                "code": {
+                  "type": "number",
+                  "description": "에러 코드"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "에러 메시지",
+                  "minLength": 5,
+                  "maxLength": 200
+                },
+                "description": {
+                  "type": "string",
+                  "description": "에러 설명",
+                  "maxLength": 300
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "examples": {
+            "type": "array",
+            "description": "사용 예제 목록",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["title", "code", "language"],
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "예제 제목",
+                  "minLength": 5,
+                  "maxLength": 100
+                },
+                "code": {
+                  "type": "string",
+                  "description": "예제 코드",
+                  "minLength": 20
+                },
+                "language": {
+                  "type": "string",
+                  "description": "프로그래밍 언어",
+                  "enum": ["javascript", "typescript", "json"],
+                  "default": "javascript"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "예제 설명",
+                  "maxLength": 200
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+        "vscodeExtension": {
+          "type": "object",
+          "description": "VS Code 확장 프로그램 관련 설정",
+          "additionalProperties": true,
+          "properties": {
+        "snippets": {
+          "type": "array",
+          "description": "VS Code 스니펫 정의",
+          "items": {
+            "type": "object",
+            "required": ["prefix", "body", "description"],
+            "properties": {
+              "prefix": {
+                "type": "string",
+                "description": "스니펫 접두사",
+                "minLength": 3,
+                "maxLength": 50
+              },
+              "body": {
+                "type": "array",
+                "description": "스니펫 본문 (각 줄이 배열 요소)",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "description": {
+                "type": "string",
+                "description": "스니펫 설명",
+                "minLength": 5,
+                "maxLength": 100
+              },
+              "scope": {
+                "type": "string",
+                "description": "스니펫 적용 범위",
+                "enum": ["javascript", "typescript", "json"],
+                "default": "javascript"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "completionItems": {
+          "type": "array",
+          "description": "자동완성 아이템 정의",
+          "items": {
+            "type": "object",
+            "required": ["label", "kind", "insertText"],
+            "additionalProperties": true,
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "자동완성 라벨",
+                "minLength": 1,
+                "maxLength": 50
+              },
+              "kind": {
+                "type": "string",
+                "description": "자동완성 아이템 종류",
+                "enum": ["method", "property", "value", "text", "snippet", "function", "variable", "class", "interface", "enum", "keyword", "reference", "color", "file", "folder", "event", "unit", "operator", "typeParameter"]
+              },
+              "insertText": {
+                "type": "string",
+                "description": "삽입될 텍스트",
+                "minLength": 1
+              },
+              "documentation": {
+                "type": "string",
+                "description": "문서화 텍스트",
+                "maxLength": 300
+              },
+              "filterText": {
+                "type": "string",
+                "description": "필터링용 텍스트",
+                "maxLength": 50
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -5,7 +5,9 @@
     "category": "media",
     "description": "앱이 대용량 미디어 관련 데이터셋을 지속적으로 저장/조회할 수 있도록 합니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
@@ -23,7 +25,12 @@
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          }
         ]
       },
       "errors": [],
@@ -41,12 +48,27 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "uri", "required": true, "type": "string", "description": "조회할 미디어 파일의 URI" }
+        {
+          "name": "uri",
+          "required": true,
+          "type": "string",
+          "description": "조회할 미디어 파일의 URI"
+        }
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "mediaMetaData", "type": "object", "required": false, "description": "조회된 미디어 메타데이터" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "mediaMetaData",
+            "type": "object",
+            "required": false,
+            "description": "조회된 미디어 메타데이터"
+          }
         ]
       },
       "errors": [],
@@ -81,7 +103,8 @@
           "    }",
           "});"
         ],
-        "description": "미디어 메타데이터 저장"
+        "description": "미디어 메타데이터 저장",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-media-db-get",
@@ -100,18 +123,39 @@
           "    }",
           "});"
         ],
-        "description": "미디어 메타데이터 조회"
+        "description": "미디어 메타데이터 조회",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
-      { "label": "putMediaMetaData", "kind": "Method", "documentation": "미디어 메타데이터 저장", "insertText": "putMediaMetaData", "detail": "Media Database" },
-      { "label": "getMediaMetaData", "kind": "Method", "documentation": "미디어 메타데이터 조회", "insertText": "getMediaMetaData", "detail": "Media Database" }
+      {
+        "label": "putMediaMetaData",
+        "kind": "Method",
+        "documentation": "미디어 메타데이터 저장",
+        "insertText": "putMediaMetaData",
+        "detail": "Media Database"
+      },
+      {
+        "label": "getMediaMetaData",
+        "kind": "Method",
+        "documentation": "미디어 메타데이터 조회",
+        "insertText": "getMediaMetaData",
+        "detail": "Media Database"
+      }
     ],
     "diagnostics": [
       {
         "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.mediadb'",
         "checks": [
-          { "field": "method", "validValues": ["putMediaMetaData", "getMediaMetaData"], "required": true, "type": "string" }
+          {
+            "field": "method",
+            "validValues": [
+              "putMediaMetaData",
+              "getMediaMetaData"
+            ],
+            "required": true,
+            "type": "string"
+          }
         ]
       }
     ]

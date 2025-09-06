@@ -5,7 +5,9 @@
     "category": "device",
     "description": "TV 시스템 정보를 조회하는 메서드를 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
@@ -14,15 +16,45 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "keys", "required": true, "type": "array", "description": "조회할 시스템 정보 키 배열" }
+        {
+          "name": "keys",
+          "required": true,
+          "type": "array",
+          "description": "조회할 시스템 정보 키 배열"
+        }
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "modelName", "type": "string", "required": false, "description": "TV 모델명" },
-          { "name": "firmwareVersion", "type": "string", "required": false, "description": "펌웨어 버전" },
-          { "name": "UHD", "type": "boolean", "required": false, "description": "UHD 지원 여부" },
-          { "name": "sdkVersion", "type": "string", "required": false, "description": "webOS SDK 버전" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "modelName",
+            "type": "string",
+            "required": false,
+            "description": "TV 모델명"
+          },
+          {
+            "name": "firmwareVersion",
+            "type": "string",
+            "required": false,
+            "description": "펌웨어 버전"
+          },
+          {
+            "name": "UHD",
+            "type": "boolean",
+            "required": false,
+            "description": "UHD 지원 여부"
+          },
+          {
+            "name": "sdkVersion",
+            "type": "string",
+            "required": false,
+            "description": "webOS SDK 버전"
+          }
         ]
       },
       "errors": [],
@@ -40,12 +72,27 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "key", "required": true, "type": "string", "description": "조회할 속성 키" }
+        {
+          "name": "key",
+          "required": true,
+          "type": "string",
+          "description": "조회할 속성 키"
+        }
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "value", "type": "string", "required": false, "description": "조회된 속성 값" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "value",
+            "type": "string",
+            "required": false,
+            "description": "조회된 속성 값"
+          }
         ]
       },
       "errors": [],
@@ -73,7 +120,8 @@
           "    }",
           "});"
         ],
-        "description": "TV 시스템 정보 조회"
+        "description": "TV 시스템 정보 조회",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-tv-property",
@@ -88,18 +136,39 @@
           "    }",
           "});"
         ],
-        "description": "TV 시스템 속성 조회"
+        "description": "TV 시스템 속성 조회",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
-      { "label": "getSystemInfo", "kind": "Method", "documentation": "시스템 정보 조회", "insertText": "getSystemInfo", "detail": "TV Device Information" },
-      { "label": "getSystemProperty", "kind": "Method", "documentation": "시스템 속성 조회", "insertText": "getSystemProperty", "detail": "TV Device Information" }
+      {
+        "label": "getSystemInfo",
+        "kind": "Method",
+        "documentation": "시스템 정보 조회",
+        "insertText": "getSystemInfo",
+        "detail": "TV Device Information"
+      },
+      {
+        "label": "getSystemProperty",
+        "kind": "Method",
+        "documentation": "시스템 속성 조회",
+        "insertText": "getSystemProperty",
+        "detail": "TV Device Information"
+      }
     ],
     "diagnostics": [
       {
         "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.tv\\.systemproperty'",
         "checks": [
-          { "field": "method", "validValues": ["getSystemInfo", "getSystemProperty"], "required": true, "type": "string" }
+          {
+            "field": "method",
+            "validValues": [
+              "getSystemInfo",
+              "getSystemProperty"
+            ],
+            "required": true,
+            "type": "string"
+          }
         ]
       }
     ]

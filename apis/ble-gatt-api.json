@@ -5,13 +5,15 @@
     "category": "network",
     "description": "BLE(GATT) 스캔/연결/특성 읽기·쓰기 등 클라이언트 기능을 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
       "name": "isEnabled",
       "description": "Bluetooth 사용 가능 여부를 확인합니다. BLE 작업 실행 전 먼저 호출하여 사용 가능 상태인지 확인해야 합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
         {
@@ -24,36 +26,127 @@
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "subscribed", "type": "boolean", "required": false, "description": "구독 상태" },
-          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
-          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" },
-          { "name": "isEnabled", "type": "boolean", "required": true, "description": "현재 Bluetooth 어댑터 사용 가능 여부" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "subscribed",
+            "type": "boolean",
+            "required": false,
+            "description": "구독 상태"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "오류 메시지"
+          },
+          {
+            "name": "isEnabled",
+            "type": "boolean",
+            "required": true,
+            "description": "현재 Bluetooth 어댑터 사용 가능 여부"
+          }
         ]
       },
       "errors": [
-        { "code": 100, "message": "See Error Code Reference" },
-        { "code": 101, "message": "See Error Code Reference" },
-        { "code": 102, "message": "See Error Code Reference" },
-        { "code": 103, "message": "See Error Code Reference" },
-        { "code": 104, "message": "See Error Code Reference" },
-        { "code": 105, "message": "See Error Code Reference" },
-        { "code": 106, "message": "See Error Code Reference" },
-        { "code": 107, "message": "See Error Code Reference" },
-        { "code": 302, "message": "See Error Code Reference" },
-        { "code": 303, "message": "See Error Code Reference" },
-        { "code": 304, "message": "See Error Code Reference" },
-        { "code": 305, "message": "See Error Code Reference" },
-        { "code": 306, "message": "See Error Code Reference" },
-        { "code": 307, "message": "See Error Code Reference" },
-        { "code": 308, "message": "See Error Code Reference" },
-        { "code": 309, "message": "See Error Code Reference" },
-        { "code": 310, "message": "See Error Code Reference" },
-        { "code": 311, "message": "See Error Code Reference" },
-        { "code": 312, "message": "See Error Code Reference" },
-        { "code": 313, "message": "See Error Code Reference" },
-        { "code": 314, "message": "See Error Code Reference" },
-        { "code": 315, "message": "See Error Code Reference" }
+        {
+          "code": 100,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 101,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 102,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 103,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 104,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 105,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 106,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 107,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 302,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 303,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 304,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 305,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 306,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 307,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 308,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 309,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 310,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 311,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 312,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 313,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 314,
+          "message": "See Error Code Reference"
+        },
+        {
+          "code": 315,
+          "message": "See Error Code Reference"
+        }
       ],
       "examples": [
         {
@@ -71,24 +164,67 @@
     {
       "name": "startScan",
       "description": "BLE 디바이스 스캔을 시작합니다. uuid, scanType을 통해 특정 서비스나 이름 기반 필터링이 가능합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "subscribe", "required": true, "type": "boolean", "description": "변경 알림 구독 여부 (필수)" },
-        { "name": "uuid", "required": false, "type": "string", "description": "스캔 대상 서비스 UUID 필터" },
-        { "name": "scanType", "required": false, "type": "string", "description": "스캔 방식 (예: 'name' - 광고에 이름 포함 디바이스만)" }
+        {
+          "name": "subscribe",
+          "required": true,
+          "type": "boolean",
+          "description": "변경 알림 구독 여부 (필수)"
+        },
+        {
+          "name": "uuid",
+          "required": false,
+          "type": "string",
+          "description": "스캔 대상 서비스 UUID 필터"
+        },
+        {
+          "name": "scanType",
+          "required": false,
+          "type": "string",
+          "description": "스캔 방식 (예: 'name' - 광고에 이름 포함 디바이스만)"
+        }
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "subscribed", "type": "boolean", "required": false, "description": "구독 상태" },
-          { "name": "devices", "type": "array", "required": false, "description": "발견된 디바이스 목록" },
-          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
-          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "subscribed",
+            "type": "boolean",
+            "required": false,
+            "description": "구독 상태"
+          },
+          {
+            "name": "devices",
+            "type": "array",
+            "required": false,
+            "description": "발견된 디바이스 목록"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "오류 메시지"
+          }
         ]
       },
       "errors": [
-        { "code": 1003, "message": "Scan is already in progress" }
+        {
+          "code": 1003,
+          "message": "Scan is already in progress"
+        }
       ],
       "examples": [
         {
@@ -101,14 +237,29 @@
     {
       "name": "stopScan",
       "description": "진행 중인 BLE 스캔을 중지합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "errorCode", "type": "number", "required": false, "description": "오류 코드" },
-          { "name": "errorText", "type": "string", "required": false, "description": "오류 메시지" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "오류 메시지"
+          }
         ]
       },
       "errors": [],
@@ -123,15 +274,35 @@
     {
       "name": "getState",
       "description": "스캔 상태 및 연결/페어링된 디바이스 정보를 반환합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "isScan", "type": "boolean", "required": false, "description": "현재 스캔 진행 여부" },
-          { "name": "paired", "type": "array", "required": false, "description": "페어링된 디바이스 목록" },
-          { "name": "connected", "type": "array", "required": false, "description": "연결된 디바이스 목록" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "isScan",
+            "type": "boolean",
+            "required": false,
+            "description": "현재 스캔 진행 여부"
+          },
+          {
+            "name": "paired",
+            "type": "array",
+            "required": false,
+            "description": "페어링된 디바이스 목록"
+          },
+          {
+            "name": "connected",
+            "type": "array",
+            "required": false,
+            "description": "연결된 디바이스 목록"
+          }
         ]
       },
       "errors": [],
@@ -146,13 +317,32 @@
     {
       "name": "pair",
       "description": "원격 BLE 디바이스를 페어링합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "address", "required": true, "type": "string", "description": "페어링할 디바이스의 주소" },
-        { "name": "name", "required": false, "type": "string", "description": "디바이스 이름" }
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "description": "페어링할 디바이스의 주소"
+        },
+        {
+          "name": "name",
+          "required": false,
+          "type": "string",
+          "description": "디바이스 이름"
+        }
       ],
-      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" } ] },
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          }
+        ]
+      },
       "errors": [],
       "examples": [
         {
@@ -165,10 +355,26 @@
     {
       "name": "unpair",
       "description": "페어링된 디바이스 연결을 해제하고 페어링 정보를 제거합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
-      "parameters": [ { "name": "address", "required": true, "type": "string", "description": "디바이스 주소" } ],
-      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" } ] },
+      "parameters": [
+        {
+          "name": "address",
+          "required": true,
+          "type": "string",
+          "description": "디바이스 주소"
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          }
+        ]
+      },
       "errors": [],
       "examples": [
         {
@@ -195,7 +401,8 @@
           "    }",
           "});"
         ],
-        "description": "BLE 사용 가능 여부 확인/구독"
+        "description": "BLE 사용 가능 여부 확인/구독",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-ble-startscan",
@@ -211,24 +418,81 @@
           "    }",
           "});"
         ],
-        "description": "BLE 스캔 시작"
+        "description": "BLE 스캔 시작",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
-      { "label": "isEnabled", "kind": "Method", "documentation": "Bluetooth 사용 가능 여부 확인", "insertText": "isEnabled", "detail": "BLE GATT" },
-      { "label": "startScan", "kind": "Method", "documentation": "BLE 디바이스 스캔 시작", "insertText": "startScan", "detail": "BLE GATT" },
-      { "label": "stopScan", "kind": "Method", "documentation": "BLE 스캔 중지", "insertText": "stopScan", "detail": "BLE GATT" },
-      { "label": "getState", "kind": "Method", "documentation": "스캔/연결 상태 조회", "insertText": "getState", "detail": "BLE GATT" },
-      { "label": "pair", "kind": "Method", "documentation": "디바이스 페어링", "insertText": "pair", "detail": "BLE GATT" },
-      { "label": "unpair", "kind": "Method", "documentation": "디바이스 언페어", "insertText": "unpair", "detail": "BLE GATT" }
+      {
+        "label": "isEnabled",
+        "kind": "Method",
+        "documentation": "Bluetooth 사용 가능 여부 확인",
+        "insertText": "isEnabled",
+        "detail": "BLE GATT"
+      },
+      {
+        "label": "startScan",
+        "kind": "Method",
+        "documentation": "BLE 디바이스 스캔 시작",
+        "insertText": "startScan",
+        "detail": "BLE GATT"
+      },
+      {
+        "label": "stopScan",
+        "kind": "Method",
+        "documentation": "BLE 스캔 중지",
+        "insertText": "stopScan",
+        "detail": "BLE GATT"
+      },
+      {
+        "label": "getState",
+        "kind": "Method",
+        "documentation": "스캔/연결 상태 조회",
+        "insertText": "getState",
+        "detail": "BLE GATT"
+      },
+      {
+        "label": "pair",
+        "kind": "Method",
+        "documentation": "디바이스 페어링",
+        "insertText": "pair",
+        "detail": "BLE GATT"
+      },
+      {
+        "label": "unpair",
+        "kind": "Method",
+        "documentation": "디바이스 언페어",
+        "insertText": "unpair",
+        "detail": "BLE GATT"
+      }
     ],
     "diagnostics": [
       {
         "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.blegatt'",
         "checks": [
-          { "field": "method", "validValues": ["isEnabled", "startScan", "stopScan", "getState", "pair", "unpair"], "required": true, "type": "string" },
-          { "field": "parameters.subscribe", "required": false, "type": "boolean" },
-          { "field": "parameters.address", "required": false, "type": "string" }
+          {
+            "field": "method",
+            "validValues": [
+              "isEnabled",
+              "startScan",
+              "stopScan",
+              "getState",
+              "pair",
+              "unpair"
+            ],
+            "required": true,
+            "type": "string"
+          },
+          {
+            "field": "parameters.subscribe",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "field": "parameters.address",
+            "required": false,
+            "type": "string"
+          }
         ]
       }
     ]

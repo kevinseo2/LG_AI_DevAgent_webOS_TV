@@ -1,0 +1,232 @@
+{
+  "apiInfo": {
+    "serviceName": "Database",
+    "serviceUri": "luna://com.palm.db",
+    "category": "system",
+    "description": "DB8(JSON DB) 서비스를 통해 앱의 영속 데이터를 추가/수정/삭제/조회/권한관리/감시할 수 있습니다.",
+    "version": "1.0",
+    "lastUpdated": "2025-01-18"
+  },
+  "methods": [
+    {
+      "name": "batch",
+      "description": "여러 DB 작업(put/get/del/find/merge)을 하나의 요청으로 실행합니다(원자성 보장 없음).",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "operations",
+          "required": true,
+          "type": "array",
+          "description": "수행할 데이터베이스 작업 목록(각 항목은 {method, params})."
+        }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "responses", "type": "array", "required": false, "description": "각 작업의 개별 응답 배열" }
+        ]
+      },
+      "errors": [
+        { "code": -3984, "message": "No required key: \"method\"" },
+        { "code": -3984, "message": "No required key: \"params\"" },
+        { "code": -3982, "message": "db: invalid operation in batch" }
+      ],
+      "examples": [
+        {
+          "title": "배치 실행(put, merge)",
+          "code": "var request = webOS.service.request('luna://com.palm.db', {\n  method: 'batch',\n  parameters: {\n    operations: [\n      { method: 'put', params: { objects: [{ _kind: 'com.yourdomain.test:1', sample: 'sample1' }] } },\n      { method: 'merge', params: { query: { from: 'com.yourdomain.test:1', where: [{ prop: 'sample', op: '=', val: 'sample1' }] }, props: { sample: 'sample2' } } }\n    ]\n  },\n  onSuccess: function (res) { console.log('Batch ok:', JSON.stringify(res)); },\n  onFailure: function (err) { console.log('Batch failed:', err.errorText); }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "del",
+      "description": "JSON 객체를 삭제합니다(IDs 또는 쿼리로 지정).",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        { "name": "ids", "required": false, "type": "array", "description": "삭제할 객체 ID 배열" },
+        { "name": "query", "required": false, "type": "object", "description": "삭제 대상 쿼리" },
+        { "name": "purge", "required": false, "type": "boolean", "description": "true면 즉시 영구 삭제, false면 삭제 표시 후 추후 purge" }
+      ],
+      "returns": {
+        "parameters": [
+          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
+          { "name": "results", "type": "array", "required": false, "description": "ID로 삭제한 경우 결과 목록" },
+          { "name": "count", "type": "number", "required": false, "description": "쿼리로 삭제한 경우 삭제된 개수" }
+        ]
+      },
+      "errors": [
+        { "code": -3963, "message": "db: permission denied" },
+        { "code": -3965, "message": "db: no index for query" },
+        { "code": -3962, "message": "db: quota exceeded" }
+      ],
+      "examples": [
+        {
+          "title": "ID로 삭제",
+          "code": "webOS.service.request('luna://com.palm.db', {\n  method: 'del',\n  parameters: { ids: ['JHd3Dg427oB'] }\n});",
+          "language": "javascript"
+        },
+        {
+          "title": "쿼리로 삭제",
+          "code": "webOS.service.request('luna://com.palm.db', {\n  method: 'del',\n  parameters: { query: { from: 'com.yourdomain.test:1' } }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "delKind",
+      "description": "데이터베이스에서 특정 kind를 삭제합니다(해당 kind의 모든 데이터 삭제).",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [ { "name": "id", "required": true, "type": "string", "description": "삭제할 kind ID" } ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" } ] },
+      "errors": [],
+      "examples": [ { "title": "kind 삭제", "code": "webOS.service.request('luna://com.palm.db', { method: 'delKind', parameters: { id: 'com.yourdomain.test:1' } });", "language": "javascript" } ]
+    },
+    {
+      "name": "find",
+      "description": "쿼리에 매칭되는 객체 목록을 반환합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [ { "name": "query", "required": true, "type": "object", "description": "DB8 쿼리" } ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }, { "name": "results", "type": "array", "required": false, "description": "검색 결과" } ] },
+      "errors": [],
+      "examples": [ { "title": "데이터 검색", "code": "webOS.service.request('luna://com.palm.db', { method: 'find', parameters: { query: { from: 'com.yourdomain.test:1', where: [{ prop: 'name', op: '=', val: 'John' }] } } });", "language": "javascript" } ]
+    },
+    {
+      "name": "get",
+      "description": "IDs로 JSON 객체를 조회합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [ { "name": "ids", "required": true, "type": "array", "description": "조회할 객체 ID 배열" } ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }, { "name": "results", "type": "array", "required": false, "description": "조회된 객체들" } ] },
+      "errors": [],
+      "examples": [ { "title": "ID로 조회", "code": "webOS.service.request('luna://com.palm.db', { method: 'get', parameters: { ids: ['JHd3Dg427oB'] } });", "language": "javascript" } ]
+    },
+    {
+      "name": "merge",
+      "description": "기존 객체들의 속성 값을 갱신합니다(부분 업데이트).",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        { "name": "query", "required": true, "type": "object", "description": "대상 선택을 위한 쿼리" },
+        { "name": "props", "required": true, "type": "object", "description": "병합(갱신)할 속성 집합" }
+      ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }, { "name": "count", "type": "number", "required": false, "description": "갱신된 개수" } ] },
+      "errors": [],
+      "examples": [ { "title": "속성 병합", "code": "webOS.service.request('luna://com.palm.db', { method: 'merge', parameters: { query: { from: 'com.yourdomain.test:1', where: [{ prop: 'name', op: '=', val: 'John' }] }, props: { age: 31 } } });", "language": "javascript" } ]
+    },
+    {
+      "name": "put",
+      "description": "특정 kind의 JSON 객체를 저장합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [ { "name": "objects", "required": true, "type": "array", "description": "저장할 객체 배열" } ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }, { "name": "results", "type": "array", "required": false, "description": "저장 결과(id, rev 포함)" } ] },
+      "errors": [],
+      "examples": [ { "title": "데이터 저장", "code": "webOS.service.request('luna://com.palm.db', { method: 'put', parameters: { objects: [{ _kind: 'com.yourdomain.test:1', name: 'John', age: 30 }] } });", "language": "javascript" } ]
+    },
+    {
+      "name": "putKind",
+      "description": "데이터베이스에 kind를 등록합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        { "name": "id", "required": true, "type": "string", "description": "등록할 kind ID" },
+        { "name": "owner", "required": false, "type": "string", "description": "소유자(app id)" },
+        { "name": "indexes", "required": false, "type": "array", "description": "인덱스 정의 목록" }
+      ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" } ] },
+      "errors": [],
+      "examples": [ { "title": "kind 등록", "code": "webOS.service.request('luna://com.palm.db', { method: 'putKind', parameters: { id: 'com.yourdomain.test:1', owner: 'com.yourdomain.app' } });", "language": "javascript" } ]
+    },
+    {
+      "name": "putPermissions",
+      "description": "다른 앱/서비스가 DB8 데이터에 접근할 수 있도록 권한을 설정합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [ { "name": "permissions", "required": true, "type": "object", "description": "권한 설정 객체" } ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" } ] },
+      "errors": [],
+      "examples": [ { "title": "권한 설정", "code": "webOS.service.request('luna://com.palm.db', { method: 'putPermissions', parameters: { permissions: { \"com.yourdomain.app\": { read: true, write: false } } } });", "language": "javascript" } ]
+    },
+    {
+      "name": "reserveIds",
+      "description": "객체 ID 블록을 예약합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [ { "name": "count", "required": true, "type": "number", "description": "예약할 ID 개수" } ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }, { "name": "ids", "type": "array", "required": false, "description": "예약된 ID 목록" } ] },
+      "errors": [],
+      "examples": [ { "title": "ID 예약", "code": "webOS.service.request('luna://com.palm.db', { method: 'reserveIds', parameters: { count: 10 } });", "language": "javascript" } ]
+    },
+    {
+      "name": "search",
+      "description": "? 연산자를 사용한 전체 텍스트 검색을 지원합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [ { "name": "query", "required": true, "type": "object", "description": "검색용 쿼리(텍스트, from 등 포함)" } ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }, { "name": "results", "type": "array", "required": false, "description": "검색 결과" } ] },
+      "errors": [],
+      "examples": [ { "title": "전체 텍스트 검색", "code": "webOS.service.request('luna://com.palm.db', { method: 'search', parameters: { query: { from: 'com.yourdomain.test:1', where: [{ prop: 'title', op: '?', val: 'hello' }] } } });", "language": "javascript" } ]
+    },
+    {
+      "name": "watch",
+      "description": "쿼리 결과에 변화를 일으키는 DB 업데이트를 감시합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [ { "name": "query", "required": true, "type": "object", "description": "감시할 쿼리" } ],
+      "returns": { "parameters": [ { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }, { "name": "fired", "type": "boolean", "required": false, "description": "감시 트리거 발생 여부" } ] },
+      "errors": [],
+      "examples": [ { "title": "변경 감시", "code": "var h = webOS.service.request('luna://com.palm.db', { method: 'watch', parameters: { query: { from: 'com.yourdomain.test:1' } }, onSuccess: function (res) { if (res.fired) console.log('Changed'); } });\n// h.cancel() 로 해지", "language": "javascript" } ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-db-put",
+        "body": [
+          "webOS.service.request('luna://com.palm.db', {",
+          "    method: 'put',",
+          "    parameters: { objects: [{ _kind: '${1:com.yourdomain.test:1}', ${2:// props} }] },",
+          "});"
+        ],
+        "description": "DB8 객체 저장"
+      },
+      {
+        "prefix": "webos-db-find",
+        "body": [
+          "webOS.service.request('luna://com.palm.db', {",
+          "    method: 'find',",
+          "    parameters: { query: { from: '${1:com.yourdomain.test:1}', where: [{ prop: '${2:prop}', op: '${3:=}', val: '${4:value}' }] } },",
+          "});"
+        ],
+        "description": "DB8 객체 검색"
+      }
+    ],
+    "completionItems": [
+      { "label": "batch", "kind": "Method", "documentation": "여러 DB 작업을 한 번에 실행", "insertText": "batch", "detail": "Database" },
+      { "label": "put", "kind": "Method", "documentation": "객체 저장", "insertText": "put", "detail": "Database" },
+      { "label": "find", "kind": "Method", "documentation": "객체 검색", "insertText": "find", "detail": "Database" },
+      { "label": "get", "kind": "Method", "documentation": "ID로 객체 조회", "insertText": "get", "detail": "Database" },
+      { "label": "merge", "kind": "Method", "documentation": "속성 병합(부분 갱신)", "insertText": "merge", "detail": "Database" },
+      { "label": "del", "kind": "Method", "documentation": "객체 삭제", "insertText": "del", "detail": "Database" },
+      { "label": "delKind", "kind": "Method", "documentation": "kind 삭제", "insertText": "delKind", "detail": "Database" },
+      { "label": "putKind", "kind": "Method", "documentation": "kind 등록", "insertText": "putKind", "detail": "Database" },
+      { "label": "putPermissions", "kind": "Method", "documentation": "권한 설정", "insertText": "putPermissions", "detail": "Database" },
+      { "label": "reserveIds", "kind": "Method", "documentation": "ID 예약", "insertText": "reserveIds", "detail": "Database" },
+      { "label": "search", "kind": "Method", "documentation": "전체 텍스트 검색", "insertText": "search", "detail": "Database" },
+      { "label": "watch", "kind": "Method", "documentation": "변경 감시", "insertText": "watch", "detail": "Database" }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.palm\\.db'",
+        "checks": [
+          { "field": "method", "validValues": ["batch","del","delKind","find","get","merge","put","putKind","putPermissions","reserveIds","search","watch"], "required": true, "type": "string" }
+        ]
+      }
+    ]
+  }
+}

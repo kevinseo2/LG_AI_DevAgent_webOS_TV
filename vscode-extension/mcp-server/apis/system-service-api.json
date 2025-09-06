@@ -5,7 +5,9 @@
     "category": "system",
     "description": "시스템 시간 정보를 조회/설정하는 메서드를 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
@@ -14,14 +16,40 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "subscribe", "required": false, "type": "boolean", "description": "시간 변경 구독 여부", "defaultValue": false }
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "시간 변경 구독 여부",
+          "defaultValue": false
+        }
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "utc", "type": "number", "required": true, "description": "UTC 시간(ms)" },
-          { "name": "localtime", "type": "object", "required": true, "description": "로컬 시간 정보" },
-          { "name": "timezone", "type": "string", "required": true, "description": "시간대" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "utc",
+            "type": "number",
+            "required": true,
+            "description": "UTC 시간(ms)"
+          },
+          {
+            "name": "localtime",
+            "type": "object",
+            "required": true,
+            "description": "로컬 시간 정보"
+          },
+          {
+            "name": "timezone",
+            "type": "string",
+            "required": true,
+            "description": "시간대"
+          }
         ]
       },
       "errors": [],
@@ -39,11 +67,21 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "utc", "required": true, "type": "number", "description": "설정할 UTC 시간(ms)" }
+        {
+          "name": "utc",
+          "required": true,
+          "type": "number",
+          "description": "설정할 UTC 시간(ms)"
+        }
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          }
         ]
       },
       "errors": [],
@@ -71,18 +109,39 @@
           "    }",
           "});"
         ],
-        "description": "시스템 시간 조회"
+        "description": "시스템 시간 조회",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
-      { "label": "getTime", "kind": "Method", "documentation": "시스템 시간 조회", "insertText": "getTime", "detail": "System Service" },
-      { "label": "setTime", "kind": "Method", "documentation": "시스템 시간 설정", "insertText": "setTime", "detail": "System Service" }
+      {
+        "label": "getTime",
+        "kind": "Method",
+        "documentation": "시스템 시간 조회",
+        "insertText": "getTime",
+        "detail": "System Service"
+      },
+      {
+        "label": "setTime",
+        "kind": "Method",
+        "documentation": "시스템 시간 설정",
+        "insertText": "setTime",
+        "detail": "System Service"
+      }
     ],
     "diagnostics": [
       {
         "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.service\\.systemservice'",
         "checks": [
-          { "field": "method", "validValues": ["getTime", "setTime"], "required": true, "type": "string" }
+          {
+            "field": "method",
+            "validValues": [
+              "getTime",
+              "setTime"
+            ],
+            "required": true,
+            "type": "string"
+          }
         ]
       }
     ]

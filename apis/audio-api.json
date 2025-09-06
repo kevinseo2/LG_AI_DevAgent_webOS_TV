@@ -5,7 +5,9 @@
     "category": "media",
     "description": "볼륨 음소거 및 증감 제어 메서드를 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
@@ -44,7 +46,10 @@
         ]
       },
       "errors": [
-        { "code": 1, "message": "Not a valid JSON message" }
+        {
+          "code": 1,
+          "message": "Not a valid JSON message"
+        }
       ],
       "examples": [
         {
@@ -83,7 +88,10 @@
         ]
       },
       "errors": [
-        { "code": "ERROR_3", "message": "Parameters should be empty" }
+        {
+          "code": "ERROR_3",
+          "message": "Parameters should be empty"
+        }
       ],
       "examples": [
         {
@@ -122,7 +130,10 @@
         ]
       },
       "errors": [
-        { "code": "ERROR_3", "message": "Parameters should be empty" }
+        {
+          "code": "ERROR_3",
+          "message": "Parameters should be empty"
+        }
       ],
       "examples": [
         {
@@ -154,7 +165,8 @@
           "    }",
           "});"
         ],
-        "description": "Audio 음소거/해제"
+        "description": "Audio 음소거/해제",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-audio-volumedown",
@@ -172,7 +184,8 @@
           "    }",
           "});"
         ],
-        "description": "Audio 볼륨 감소"
+        "description": "Audio 볼륨 감소",
+        "scope": "javascript"
       },
       {
         "prefix": "webos-audio-volumeup",
@@ -190,20 +203,52 @@
           "    }",
           "});"
         ],
-        "description": "Audio 볼륨 증가"
+        "description": "Audio 볼륨 증가",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
-      { "label": "setMuted", "kind": "Method", "documentation": "볼륨을 음소거하거나 음소거 해제합니다.", "insertText": "setMuted", "detail": "Audio" },
-      { "label": "volumeDown", "kind": "Method", "documentation": "볼륨을 1 감소시킵니다.", "insertText": "volumeDown", "detail": "Audio" },
-      { "label": "volumeUp", "kind": "Method", "documentation": "볼륨을 1 증가시킵니다.", "insertText": "volumeUp", "detail": "Audio" }
+      {
+        "label": "setMuted",
+        "kind": "Method",
+        "documentation": "볼륨을 음소거하거나 음소거 해제합니다.",
+        "insertText": "setMuted",
+        "detail": "Audio"
+      },
+      {
+        "label": "volumeDown",
+        "kind": "Method",
+        "documentation": "볼륨을 1 감소시킵니다.",
+        "insertText": "volumeDown",
+        "detail": "Audio"
+      },
+      {
+        "label": "volumeUp",
+        "kind": "Method",
+        "documentation": "볼륨을 1 증가시킵니다.",
+        "insertText": "volumeUp",
+        "detail": "Audio"
+      }
     ],
     "diagnostics": [
       {
         "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.audio'",
         "checks": [
-          { "field": "method", "validValues": ["setMuted", "volumeDown", "volumeUp"], "required": true, "type": "string" },
-          { "field": "parameters.muted", "required": false, "type": "boolean" }
+          {
+            "field": "method",
+            "validValues": [
+              "setMuted",
+              "volumeDown",
+              "volumeUp"
+            ],
+            "required": true,
+            "type": "string"
+          },
+          {
+            "field": "parameters.muted",
+            "required": false,
+            "type": "boolean"
+          }
         ]
       }
     ]

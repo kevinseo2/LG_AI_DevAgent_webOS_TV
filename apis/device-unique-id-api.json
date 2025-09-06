@@ -5,13 +5,15 @@
     "category": "security",
     "description": "webOS TV 디바이스 식별/인증을 위한 API를 제공합니다. webOS 3.0 이상의 플랫폼에서 사용 가능합니다.",
     "version": "3.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
       "name": "deviceid/getIDs",
       "description": "webOS TV에서 제공하는 디바이스 ID를 반환합니다. 현재는 LGUDID(LG Unique Device ID)를 지원합니다.\n\nLGUDID는 MAC을 시드로 사용하여 생성되지만, 무작위로 생성된 UUID도 함께 사용합니다. UUID 버전 5 스펙에 따라 생성되며, 네임스페이스 ID 대신 MAC을 이름으로, 무작위 생성된 UUID(버전 4)를 사용합니다.\n\n중요: 이 API를 사용하기 전에 사용자의 개인정보 사용에 대한 동의를 반드시 받아야 합니다.",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
         {
@@ -127,7 +129,8 @@
           "    }",
           "});"
         ],
-        "description": "디바이스 ID 정보 가져오기"
+        "description": "디바이스 ID 정보 가져오기",
+        "scope": "javascript"
       }
     ],
     "completionItems": [
@@ -145,7 +148,9 @@
         "checks": [
           {
             "field": "method",
-            "validValues": ["deviceid/getIDs"],
+            "validValues": [
+              "deviceid/getIDs"
+            ],
             "required": true,
             "type": "string"
           },

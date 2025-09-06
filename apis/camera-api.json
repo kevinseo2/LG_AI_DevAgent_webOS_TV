@@ -5,19 +5,31 @@
     "category": "device",
     "description": "카메라와 마이크 정보 조회 관련 API(웹OS TV 4.x부터 사용 중단).",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
       "name": "getCameraList",
       "description": "사용 가능한 카메라 목록을 조회합니다. (Deprecated)",
-      "emulatorSupport": false,
+      "emulatorSupport": true,
       "deprecated": true,
       "parameters": [],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "cameraList", "type": "array", "required": false, "description": "사용 가능한 카메라 목록" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "cameraList",
+            "type": "array",
+            "required": false,
+            "description": "사용 가능한 카메라 목록"
+          }
         ]
       },
       "errors": [],
@@ -44,7 +56,8 @@
           "    }",
           "});"
         ],
-        "description": "카메라 목록 조회 (Deprecated)"
+        "description": "카메라 목록 조회 (Deprecated)",
+        "scope": "javascript"
       }
     ]
   }

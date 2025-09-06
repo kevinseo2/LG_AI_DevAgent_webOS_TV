@@ -1,0 +1,211 @@
+{
+  "apiInfo": {
+    "serviceName": "Audio",
+    "serviceUri": "luna://com.webos.audio",
+    "category": "media",
+    "description": "볼륨 음소거 및 증감 제어 메서드를 제공합니다.",
+    "version": "1.0",
+    "lastUpdated": "2025-01-18"
+  },
+  "methods": [
+    {
+      "name": "setMuted",
+      "description": "볼륨을 음소거하거나 음소거 해제합니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "muted",
+          "required": true,
+          "type": "boolean",
+          "description": "음소거/해제 여부 (true: 음소거, false: 해제)"
+        }
+      ],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ]
+      },
+      "errors": [
+        { "code": 1, "message": "Not a valid JSON message" }
+      ],
+      "examples": [
+        {
+          "title": "음소거 설정",
+          "code": "var request = webOS.service.request('luna://com.webos.audio', {\n  method: 'setMuted',\n  parameters: { muted: true },\n  onSuccess: function (inResponse) {\n    console.log('TV is muted');\n  },\n  onFailure: function (inError) {\n    console.log('Failed to set muted');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "volumeDown",
+      "description": "볼륨을 1 감소시킵니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ]
+      },
+      "errors": [
+        { "code": "ERROR_3", "message": "Parameters should be empty" }
+      ],
+      "examples": [
+        {
+          "title": "볼륨 1 감소",
+          "code": "var request = webOS.service.request('luna://com.webos.audio', {\n  method: 'volumeDown',\n  onSuccess: function (inResponse) {\n    console.log('The volume is decreased by 1.');\n  },\n  onFailure: function (inError) {\n    console.log('Failed to decrease volume by 1.');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    },
+    {
+      "name": "volumeUp",
+      "description": "볼륨을 1 증가시킵니다.",
+      "emulatorSupport": true,
+      "deprecated": false,
+      "parameters": [],
+      "returns": {
+        "parameters": [
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청의 성공/실패 여부 (true: 성공, false: 실패)"
+          },
+          {
+            "name": "errorCode",
+            "type": "number",
+            "required": false,
+            "description": "실패 시 오류 코드"
+          },
+          {
+            "name": "errorText",
+            "type": "string",
+            "required": false,
+            "description": "실패 시 오류 메시지"
+          }
+        ]
+      },
+      "errors": [
+        { "code": "ERROR_3", "message": "Parameters should be empty" }
+      ],
+      "examples": [
+        {
+          "title": "볼륨 1 증가",
+          "code": "var request = webOS.service.request('luna://com.webos.audio', {\n  method: 'volumeUp',\n  onSuccess: function (inResponse) {\n    console.log('The volume is increased by 1.');\n  },\n  onFailure: function (inError) {\n    console.log('Failed to increase volume by 1.');\n    console.log('[' + inError.errorCode + ']: ' + inError.errorText);\n  }\n});",
+          "language": "javascript"
+        }
+      ]
+    }
+  ],
+  "vscodeExtension": {
+    "snippets": [
+      {
+        "prefix": "webos-audio-setmuted",
+        "body": [
+          "webOS.service.request('luna://com.webos.audio', {",
+          "    method: 'setMuted',",
+          "    parameters: {",
+          "        muted: ${1:true}",
+          "    },",
+          "    onSuccess: function (inResponse) {",
+          "        console.log('TV is muted');",
+          "        ${2:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        console.log('Failed to set muted');",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
+          "        ${3:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "Audio 음소거/해제"
+      },
+      {
+        "prefix": "webos-audio-volumedown",
+        "body": [
+          "webOS.service.request('luna://com.webos.audio', {",
+          "    method: 'volumeDown',",
+          "    onSuccess: function (inResponse) {",
+          "        console.log('The volume is decreased by 1.');",
+          "        ${1:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        console.log('Failed to decrease volume by 1.');",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
+          "        ${2:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "Audio 볼륨 감소"
+      },
+      {
+        "prefix": "webos-audio-volumeup",
+        "body": [
+          "webOS.service.request('luna://com.webos.audio', {",
+          "    method: 'volumeUp',",
+          "    onSuccess: function (inResponse) {",
+          "        console.log('The volume is increased by 1.');",
+          "        ${1:// Success handling}",
+          "    },",
+          "    onFailure: function (inError) {",
+          "        console.log('Failed to increase volume by 1.');",
+          "        console.log('[' + inError.errorCode + ']: ' + inError.errorText);",
+          "        ${2:// Error handling}",
+          "    }",
+          "});"
+        ],
+        "description": "Audio 볼륨 증가"
+      }
+    ],
+    "completionItems": [
+      { "label": "setMuted", "kind": "Method", "documentation": "볼륨을 음소거하거나 음소거 해제합니다.", "insertText": "setMuted", "detail": "Audio" },
+      { "label": "volumeDown", "kind": "Method", "documentation": "볼륨을 1 감소시킵니다.", "insertText": "volumeDown", "detail": "Audio" },
+      { "label": "volumeUp", "kind": "Method", "documentation": "볼륨을 1 증가시킵니다.", "insertText": "volumeUp", "detail": "Audio" }
+    ],
+    "diagnostics": [
+      {
+        "pattern": "webOS\\.service\\.request\\('luna://com\\.webos\\.audio'",
+        "checks": [
+          { "field": "method", "validValues": ["setMuted", "volumeDown", "volumeUp"], "required": true, "type": "string" },
+          { "field": "parameters.muted", "required": false, "type": "boolean" }
+        ]
+      }
+    ]
+  }
+}

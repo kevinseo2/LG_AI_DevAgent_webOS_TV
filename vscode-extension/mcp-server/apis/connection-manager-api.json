@@ -5,7 +5,9 @@
     "category": "network",
     "description": "인터넷 연결 가능 여부 및 현재 연결 방식을 제공합니다.",
     "version": "1.0",
-    "lastUpdated": "2025-01-18"
+    "lastUpdated": "2025-01-18",
+    "status": "active",
+    "webosVersion": "6.x"
   },
   "methods": [
     {
@@ -14,14 +16,40 @@
       "emulatorSupport": true,
       "deprecated": false,
       "parameters": [
-        { "name": "subscribe", "required": false, "type": "boolean", "description": "상태 변경 구독 여부", "defaultValue": false }
+        {
+          "name": "subscribe",
+          "required": false,
+          "type": "boolean",
+          "description": "상태 변경 구독 여부",
+          "defaultValue": false
+        }
       ],
       "returns": {
         "parameters": [
-          { "name": "returnValue", "type": "boolean", "required": true, "description": "요청 성공 여부" },
-          { "name": "isInternetConnectionAvailable", "type": "boolean", "required": true, "description": "인터넷 연결 가능 여부" },
-          { "name": "connectedViaWifi", "type": "boolean", "required": false, "description": "Wi‑Fi 연결 여부" },
-          { "name": "connectedViaEthernet", "type": "boolean", "required": false, "description": "이더넷 연결 여부" }
+          {
+            "name": "returnValue",
+            "type": "boolean",
+            "required": true,
+            "description": "요청 성공 여부"
+          },
+          {
+            "name": "isInternetConnectionAvailable",
+            "type": "boolean",
+            "required": true,
+            "description": "인터넷 연결 가능 여부"
+          },
+          {
+            "name": "connectedViaWifi",
+            "type": "boolean",
+            "required": false,
+            "description": "Wi‑Fi 연결 여부"
+          },
+          {
+            "name": "connectedViaEthernet",
+            "type": "boolean",
+            "required": false,
+            "description": "이더넷 연결 여부"
+          }
         ]
       },
       "errors": [],
@@ -45,7 +73,8 @@
           "    onSuccess: function (inResponse) { console.log('Internet:', inResponse.isInternetConnectionAvailable); }",
           "});"
         ],
-        "description": "네트워크 연결 상태 조회"
+        "description": "네트워크 연결 상태 조회",
+        "scope": "javascript"
       }
     ]
   }
