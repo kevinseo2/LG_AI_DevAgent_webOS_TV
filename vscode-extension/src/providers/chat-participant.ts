@@ -1,16 +1,14 @@
 import * as vscode from 'vscode';
 import { MCPClient } from '../services/mcp-client';
 
-export class WebOSChatParticipant implements vscode.ChatParticipant {
+export class WebOSChatParticipant {
     private mcpClient: MCPClient | null = null;
-    private session: vscode.ChatSession | undefined;
 
     constructor(mcpClient: MCPClient | null) {
         this.mcpClient = mcpClient;
     }
 
-    async provideResponse(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
-        this.session = context.session;
+    async handleRequest(request: vscode.ChatRequest, context: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken): Promise<void> {
         
         try {
             // MCP 서버가 연결되어 있는지 확인

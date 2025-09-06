@@ -386,6 +386,10 @@ export class MCPClient {
         };
     }
 
+    isConnected(): boolean {
+        return this.isConnected;
+    }
+
     dispose(): void {
         this.clearReconnectTimer();
         

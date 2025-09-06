@@ -199,11 +199,8 @@ function registerChatParticipant(context: vscode.ExtensionContext) {
     const chatParticipant = new WebOSChatParticipant(mcpClient);
     
     context.subscriptions.push(
-        vscode.chat.registerChatParticipant('webos-tv-assistant', chatParticipant, {
-            name: 'webOS TV Assistant',
-            description: 'webOS TV 개발을 위한 AI 어시스턴트',
-            fullName: 'webOS TV Development Assistant',
-            icon: new vscode.ThemeIcon('tv')
+        vscode.chat.createChatParticipant('webos-tv-assistant', async (request, context, stream, token) => {
+            await chatParticipant.handleRequest(request, context, stream, token);
         })
     );
 }

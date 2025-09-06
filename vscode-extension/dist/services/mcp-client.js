@@ -364,6 +364,9 @@ class MCPClient {
             attempts: this.reconnectAttempts
         };
     }
+    isConnected() {
+        return this.isConnected;
+    }
     dispose() {
         this.clearReconnectTimer();
         if (this.serverProcess) {

@@ -6,8 +6,7 @@ class WebOSChatParticipant {
         this.mcpClient = null;
         this.mcpClient = mcpClient;
     }
-    async provideResponse(request, context, stream, token) {
-        this.session = context.session;
+    async handleRequest(request, context, stream, token) {
         try {
             // MCP 서버가 연결되어 있는지 확인
             if (!this.mcpClient || !this.mcpClient.isConnected()) {
