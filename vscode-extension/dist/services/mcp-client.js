@@ -44,9 +44,18 @@ class MCPClient {
         this.requestId = 0;
         this.pendingRequests = new Map();
         this.isConnected = false;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+        this.reconnectInterval = 30000; // 30초
+        this.reconnectTimer = null;
+        this.connectionStatusBarItem = null;
+        this.lastServerPath = null;
+        this.isReconnecting = false;
     }
     async initialize() {
         try {
+            // Initialize status bar item
+            this.initializeStatusBar();
             const config = vscode.workspace.getConfiguration('webos-api');
             let serverPath = config.get('mcpServerPath');
             if (!serverPath) {
@@ -102,10 +111,12 @@ class MCPClient {
                 return;
             }
             console.log(`Using MCP Server at: ${serverPath}`);
+            this.lastServerPath = serverPath;
             await this.connectToServer(serverPath);
         }
         catch (error) {
             console.error('Failed to initialize MCP client:', error);
+            this.updateStatusBar('disconnected', 'MCP Server unavailable');
             // Show warning instead of error - extension can still work with fallbacks
             vscode.window.showWarningMessage(`webOS TV API server unavailable - using fallback completions. Error: ${error}`);
         }
@@ -123,6 +134,10 @@ class MCPClient {
                     if (output.includes('webOS TV API MCP Server started successfully')) {
                         console.log('✅ MCP Server started successfully!');
                         this.isConnected = true;
+                        this.reconnectAttempts = 0;
+                        this.isReconnecting = false;
+                        this.updateStatusBar('connected', 'MCP Server connected');
+                        this.clearReconnectTimer();
                         resolve();
                     }
                     this.handleServerOutput(output);
@@ -134,6 +149,10 @@ class MCPClient {
                     if (output.includes('webOS TV API MCP Server started successfully')) {
                         console.log('✅ MCP Server started successfully (from stderr)!');
                         this.isConnected = true;
+                        this.reconnectAttempts = 0;
+                        this.isReconnecting = false;
+                        this.updateStatusBar('connected', 'MCP Server connected');
+                        this.clearReconnectTimer();
                         resolve();
                     }
                     else if (!output.includes('Warning') && !output.includes('MODULE_TYPELESS_PACKAGE_JSON')) {
@@ -145,9 +164,20 @@ class MCPClient {
                     console.log(`MCP Server process exited with code ${code}`);
                     this.isConnected = false;
                     this.serverProcess = null;
+                    this.updateStatusBar('disconnected', 'MCP Server disconnected');
+                    // Start reconnection process if not already reconnecting
+                    if (!this.isReconnecting && this.lastServerPath) {
+                        this.scheduleReconnection();
+                    }
                 });
                 this.serverProcess.on('error', (error) => {
                     console.error('Server process error:', error);
+                    this.isConnected = false;
+                    this.updateStatusBar('error', 'MCP Server error');
+                    // Start reconnection process if not already reconnecting
+                    if (!this.isReconnecting && this.lastServerPath) {
+                        this.scheduleReconnection();
+                    }
                     reject(error);
                 });
                 // Wait for server startup message with longer timeout
@@ -155,6 +185,11 @@ class MCPClient {
                     if (!this.isConnected) {
                         console.error('❌ MCP Server startup timeout after 10 seconds');
                         this.serverProcess?.kill();
+                        this.updateStatusBar('timeout', 'MCP Server startup timeout');
+                        // Start reconnection process if not already reconnecting
+                        if (!this.isReconnecting && this.lastServerPath) {
+                            this.scheduleReconnection();
+                        }
                         reject(new Error('Server startup timeout'));
                     }
                 }, 10000); // Increased to 10 seconds
@@ -237,12 +272,110 @@ class MCPClient {
             }, 5000);
         });
     }
+    initializeStatusBar() {
+        this.connectionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+        this.connectionStatusBarItem.command = 'webos-api.reconnectServer';
+        this.connectionStatusBarItem.show();
+        this.updateStatusBar('disconnected', 'MCP Server disconnected');
+    }
+    updateStatusBar(status, message) {
+        if (!this.connectionStatusBarItem)
+            return;
+        const icons = {
+            connected: '$(check)',
+            disconnected: '$(circle-slash)',
+            error: '$(error)',
+            timeout: '$(clock)',
+            reconnecting: '$(sync~spin)'
+        };
+        this.connectionStatusBarItem.text = `${icons[status]} webOS API`;
+        this.connectionStatusBarItem.tooltip = message;
+        const colors = {
+            connected: 'statusBarItem.prominentForeground',
+            disconnected: 'statusBarItem.warningForeground',
+            error: 'statusBarItem.errorForeground',
+            timeout: 'statusBarItem.warningForeground',
+            reconnecting: 'statusBarItem.prominentForeground'
+        };
+        this.connectionStatusBarItem.color = colors[status];
+    }
+    scheduleReconnection() {
+        if (this.isReconnecting || this.reconnectAttempts >= this.maxReconnectAttempts) {
+            console.log(`🚫 Reconnection cancelled: attempts=${this.reconnectAttempts}, max=${this.maxReconnectAttempts}, reconnecting=${this.isReconnecting}`);
+            return;
+        }
+        this.isReconnecting = true;
+        this.reconnectAttempts++;
+        console.log(`🔄 Scheduling reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${this.reconnectInterval / 1000} seconds`);
+        this.updateStatusBar('reconnecting', `Reconnecting to MCP Server (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        this.reconnectTimer = setTimeout(async () => {
+            if (this.lastServerPath) {
+                try {
+                    console.log(`🔄 Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+                    await this.connectToServer(this.lastServerPath);
+                }
+                catch (error) {
+                    console.error(`❌ Reconnection attempt ${this.reconnectAttempts} failed:`, error);
+                    this.isReconnecting = false;
+                    // Schedule next attempt
+                    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                        this.scheduleReconnection();
+                    }
+                    else {
+                        console.log('🚫 Max reconnection attempts reached');
+                        this.updateStatusBar('error', 'MCP Server connection failed');
+                        vscode.window.showErrorMessage('Failed to reconnect to MCP Server. Extension will use fallback mode.');
+                    }
+                }
+            }
+        }, this.reconnectInterval);
+    }
+    clearReconnectTimer() {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+    }
+    async reconnect() {
+        console.log('🔄 Manual reconnection requested');
+        this.clearReconnectTimer();
+        this.reconnectAttempts = 0;
+        this.isReconnecting = false;
+        if (this.lastServerPath) {
+            try {
+                this.updateStatusBar('reconnecting', 'Reconnecting to MCP Server...');
+                await this.connectToServer(this.lastServerPath);
+                vscode.window.showInformationMessage('Successfully reconnected to MCP Server');
+            }
+            catch (error) {
+                console.error('❌ Manual reconnection failed:', error);
+                this.updateStatusBar('error', 'Reconnection failed');
+                vscode.window.showErrorMessage(`Failed to reconnect to MCP Server: ${error}`);
+            }
+        }
+        else {
+            vscode.window.showErrorMessage('No server path available for reconnection');
+        }
+    }
+    getConnectionStatus() {
+        return {
+            connected: this.isConnected,
+            reconnecting: this.isReconnecting,
+            attempts: this.reconnectAttempts
+        };
+    }
     dispose() {
+        this.clearReconnectTimer();
         if (this.serverProcess) {
             this.serverProcess.kill();
             this.serverProcess = null;
         }
+        if (this.connectionStatusBarItem) {
+            this.connectionStatusBarItem.dispose();
+            this.connectionStatusBarItem = null;
+        }
         this.isConnected = false;
+        this.isReconnecting = false;
         this.pendingRequests.clear();
     }
 }

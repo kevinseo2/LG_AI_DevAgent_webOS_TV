@@ -160,6 +160,32 @@ function registerCommands(context: vscode.ExtensionContext) {
             vscode.window.showInformationMessage('webOS TV API cache refreshed!');
         })
     );
+
+    // Reconnect MCP Server Command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('webos-api.reconnectServer', async () => {
+            if (mcpClient) {
+                await mcpClient.reconnect();
+            } else {
+                vscode.window.showErrorMessage('MCP Client not available');
+            }
+        })
+    );
+
+    // Show Connection Status Command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('webos-api.showConnectionStatus', async () => {
+            if (mcpClient) {
+                const status = mcpClient.getConnectionStatus();
+                const statusText = status.connected ? 'Connected' : 
+                                 status.reconnecting ? 'Reconnecting' : 'Disconnected';
+                const message = `MCP Server Status: ${statusText} (Attempts: ${status.attempts})`;
+                vscode.window.showInformationMessage(message);
+            } else {
+                vscode.window.showErrorMessage('MCP Client not available');
+            }
+        })
+    );
 }
 
 export function deactivate() {

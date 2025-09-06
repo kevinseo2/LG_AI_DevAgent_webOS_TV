@@ -50,6 +50,16 @@
         "command": "webos-api.refreshAPIs",
         "title": "Refresh API Cache",
         "category": "webOS TV"
+      },
+      {
+        "command": "webos-api.reconnectServer",
+        "title": "Reconnect MCP Server",
+        "category": "webOS TV"
+      },
+      {
+        "command": "webos-api.showConnectionStatus",
+        "title": "Show Connection Status",
+        "category": "webOS TV"
       }
     ],
     "menus": {

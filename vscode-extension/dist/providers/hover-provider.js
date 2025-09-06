@@ -51,6 +51,11 @@ class WebOSHoverProvider {
             console.warn('⚠️ Position line out of bounds in hover provider:', position.line, 'document lines:', document.lineCount);
             return undefined;
         }
+        // Check for cancellation
+        if (token.isCancellationRequested) {
+            console.log('🚫 Hover request cancelled');
+            return undefined;
+        }
         const line = document.lineAt(position.line).text;
         console.log(`🔍 Hover at position (${position.line}, ${position.character}): "${line}"`);
         // Check if hovering over a complete Luna service URI
@@ -66,7 +71,7 @@ class WebOSHoverProvider {
             console.log(`📝 Word under cursor: "${word}"`);
             if (this.isMethodName(word, line)) {
                 console.log(`🎯 Detected method name: "${word}"`);
-                return this.createMethodHoverAsync(word, line);
+                return this.createMethodHoverWithTimeout(word, line, token);
             }
             // Check if hovering over webOS.service.request
             if (word === 'webOS' || word === 'service' || word === 'request') {
@@ -208,9 +213,36 @@ class WebOSHoverProvider {
         }
         return new vscode.Hover(markdown);
     }
-    async createMethodHoverAsync(methodName, line) {
+    async createMethodHoverWithTimeout(methodName, line, token) {
+        console.log(`⏱️ Creating method hover with timeout for: "${methodName}"`);
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+                reject(new Error('Hover request timeout'));
+            }, 2000); // 2초 타임아웃
+        });
+        // Create the actual hover promise
+        const hoverPromise = this.createMethodHoverAsync(methodName, line, token);
+        try {
+            // Race between timeout and actual hover
+            const result = await Promise.race([hoverPromise, timeoutPromise]);
+            console.log(`✅ Method hover completed successfully for: "${methodName}"`);
+            return result;
+        }
+        catch (error) {
+            console.warn(`⚠️ Method hover failed or timed out for: "${methodName}", using fallback`);
+            // Return fallback hover immediately
+            return this.createFallbackMethodHover(methodName, line);
+        }
+    }
+    async createMethodHoverAsync(methodName, line, token) {
         const markdown = new vscode.MarkdownString();
         console.log(`🔍 Creating async method hover for: "${methodName}" in line: "${line}"`);
+        // Check for cancellation before starting
+        if (token?.isCancellationRequested) {
+            console.log('🚫 Method hover cancelled before processing');
+            throw new Error('Hover request cancelled');
+        }
         // Extract service URI from the line
         const serviceMatch = line.match(/luna:\/\/[^'"]+/);
         if (serviceMatch) {
@@ -220,14 +252,33 @@ class WebOSHoverProvider {
             let api = apis.find(a => a.serviceUri === serviceURI);
             if (api) {
                 console.log(`🎯 Found API: ${api.serviceName}`);
-                // Try to get method info from MCP first
-                let methodInfo = await this.getMethodInfoFromMCP(api.serviceName, methodName);
+                // Show loading state
+                markdown.appendMarkdown(`### ${api.serviceName}.${methodName}\n\n`);
+                markdown.appendMarkdown(`⏳ Loading method information...\n\n`);
+                // Try to get method info from MCP first (with cancellation support)
+                let methodInfo = null;
+                try {
+                    if (!token?.isCancellationRequested) {
+                        console.log(`🔄 Attempting to get method info from MCP...`);
+                        methodInfo = await this.getMethodInfoFromMCPWithTimeout(api.serviceName, methodName, token);
+                    }
+                }
+                catch (error) {
+                    console.log(`⚠️ MCP method info failed: ${error}`);
+                }
+                // Check for cancellation after MCP call
+                if (token?.isCancellationRequested) {
+                    console.log('🚫 Method hover cancelled after MCP call');
+                    throw new Error('Hover request cancelled');
+                }
                 // Fallback to file-based info if MCP fails
                 if (!methodInfo) {
+                    console.log(`🔄 Falling back to file-based method info...`);
                     methodInfo = this.getMethodInfoFromFile(api.serviceName, methodName);
                 }
                 // Final fallback to hardcoded info
                 if (!methodInfo) {
+                    console.log(`🔄 Using hardcoded method info...`);
                     methodInfo = this.getMethodInfo(api.serviceName, methodName);
                 }
                 markdown.appendMarkdown(`### ${api.serviceName}.${methodName}\n\n`);
@@ -311,11 +362,23 @@ class WebOSHoverProvider {
         markdown.appendMarkdown(`\n[📖 webOS TV Development Guide](https://webostv.developer.lge.com/develop/)\n\n`);
         return new vscode.Hover(markdown);
     }
-    async getMethodInfoFromMCP(serviceName, methodName) {
+    async getMethodInfoFromMCPWithTimeout(serviceName, methodName, token) {
         try {
             console.log(`🔍 Getting method info from MCP for ${serviceName}.${methodName}`);
-            // Try to get method details from MCP server
-            const response = await this.apiProvider.searchAndGetMethods(serviceName);
+            // Create timeout promise
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => {
+                    reject(new Error('MCP request timeout'));
+                }, 1500); // 1.5초 타임아웃
+            });
+            // Create MCP request promise
+            const mcpPromise = this.apiProvider.searchAndGetMethods(serviceName);
+            // Race between timeout and MCP request
+            const response = await Promise.race([mcpPromise, timeoutPromise]);
+            // Check for cancellation
+            if (token?.isCancellationRequested) {
+                throw new Error('MCP request cancelled');
+            }
             if (response && response.length > 0) {
                 const method = response.find((m) => m.name === methodName);
                 if (method) {
@@ -335,6 +398,10 @@ class WebOSHoverProvider {
             console.warn(`❌ Failed to get method info from MCP:`, error);
             return this.getFallbackMethodInfo(serviceName, methodName);
         }
+    }
+    async getMethodInfoFromMCP(serviceName, methodName) {
+        // Legacy method for backward compatibility
+        return this.getMethodInfoFromMCPWithTimeout(serviceName, methodName);
     }
     getMethodInfo(serviceName, methodName) {
         // Legacy synchronous method for compatibility
@@ -533,6 +600,38 @@ class WebOSHoverProvider {
             return `${param.name}${required}: ${param.type}`;
         }).join(', ');
         return `{ ${returnParams} }`;
+    }
+    createFallbackMethodHover(methodName, line) {
+        const markdown = new vscode.MarkdownString();
+        console.log(`🔄 Creating fallback method hover for: "${methodName}"`);
+        // Extract service URI from the line
+        const serviceMatch = line.match(/luna:\/\/[^'"]+/);
+        if (serviceMatch) {
+            const serviceURI = serviceMatch[0];
+            const serviceName = this.getServiceNameFromURI(serviceURI);
+            markdown.appendMarkdown(`### ${serviceName}.${methodName}\n\n`);
+            markdown.appendMarkdown(`⚠️ **Limited Information Available**\n\n`);
+            markdown.appendMarkdown(`Method in Luna Service: \`${serviceURI}\`\n\n`);
+            // Provide basic usage information
+            markdown.appendMarkdown(`**Basic Usage:**\n`);
+            markdown.appendCodeblock(this.generateExampleCode(serviceName, methodName, serviceURI), 'javascript');
+            markdown.appendMarkdown(`\n💡 **Tip:** For detailed information, check the [webOS TV API Documentation](https://webostv.developer.lge.com/develop/references/)\n\n`);
+        }
+        else {
+            markdown.appendMarkdown(`### ${methodName}\n\n`);
+            markdown.appendMarkdown(`webOS TV Luna Service method\n\n`);
+            markdown.appendMarkdown(`⚠️ **Limited Information Available**\n\n`);
+            markdown.appendMarkdown(`[📖 webOS TV API Documentation](https://webostv.developer.lge.com/develop/references/)\n\n`);
+        }
+        return new vscode.Hover(markdown);
+    }
+    getServiceNameFromURI(serviceURI) {
+        // Extract service name from URI
+        const match = serviceURI.match(/luna:\/\/[^.]*\.([^.]+)/);
+        if (match) {
+            return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+        }
+        return 'Unknown Service';
     }
 }
 exports.WebOSHoverProvider = WebOSHoverProvider;
