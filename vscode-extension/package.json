@@ -30,6 +30,14 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "chatParticipants": [
+      {
+        "id": "webos-tv-assistant",
+        "name": "webOS TV Assistant",
+        "description": "webOS TV 개발을 위한 AI 어시스턴트",
+        "when": "true"
+      }
+    ],
     "commands": [
       {
         "command": "webos-api.searchAPI",

@@ -316,6 +316,39 @@ const tools: Tool[] = [
       },
       required: ['intent']
     }
+  },
+  {
+    name: 'webos_chat_assistant',
+    description: 'webOS TV 개발을 위한 지능형 채팅 어시스턴트',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userQuery: {
+          type: 'string',
+          description: '사용자 질문이나 요청'
+        },
+        context: {
+          type: 'object',
+          properties: {
+            projectType: {
+              type: 'string',
+              enum: ['media', 'game', 'utility', 'smart-home'],
+              description: '프로젝트 유형'
+            },
+            currentCode: {
+              type: 'string',
+              description: '현재 작성 중인 코드'
+            },
+            targetVersion: {
+              type: 'string',
+              description: '타겟 webOS TV 버전',
+              default: '6.x'
+            }
+          }
+        }
+      },
+      required: ['userQuery']
+    }
   }
 ];
 
@@ -606,6 +639,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
         };
       }
 
+      case 'webos_chat_assistant': {
+        const validatedArgs = z.object({
+          userQuery: z.string(),
+          context: z.object({
+            projectType: z.enum(['media', 'game', 'utility', 'smart-home']).optional(),
+            currentCode: z.string().optional(),
+            targetVersion: z.string().optional().default('6.x')
+          }).optional()
+        }).parse(args);
+
+        // Analyze user query and provide intelligent response
+        const response = await generateChatResponse(validatedArgs.userQuery, validatedArgs.context);
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: response
+            }
+          ]
+        };
+      }
+
       default:
         return {
           content: [
@@ -630,6 +686,68 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
     };
   }
 });
+
+// Generate intelligent chat response
+async function generateChatResponse(userQuery: string, context?: any): Promise<string> {
+  try {
+    const lowerQuery = userQuery.toLowerCase();
+    
+    // API 목록 요청
+    if (lowerQuery.includes('api') && (lowerQuery.includes('목록') || lowerQuery.includes('list'))) {
+      const apis = await apiManager.listAPIs({});
+      let response = '## 📋 webOS TV API 목록\n\n';
+      
+      const categories = {
+        'system': '🔧 시스템',
+        'media': '🎵 미디어', 
+        'device': '📱 디바이스',
+        'network': '🌐 네트워크'
+      };
+
+      for (const [category, displayName] of Object.entries(categories)) {
+        const categoryAPIs = apis.filter((api: any) => api.category === category);
+        if (categoryAPIs.length > 0) {
+          response += `### ${displayName}\n`;
+          for (const api of categoryAPIs) {
+            response += `- **${api.serviceName}**: \`${api.serviceUri}\`\n`;
+          }
+          response += '\n';
+        }
+      }
+      
+      return response;
+    }
+    
+    // 특정 API 정보 요청
+    if (lowerQuery.includes('audio') && lowerQuery.includes('api')) {
+      const audioAPI = await apiManager.getAPIInfo('Audio');
+      if (audioAPI) {
+        let response = `## 🎵 Audio API\n\n`;
+        response += `**서비스 URI**: \`${audioAPI.apiInfo.serviceUri}\`\n`;
+        response += `**설명**: ${audioAPI.apiInfo.description}\n\n`;
+        response += `**사용 가능한 메서드**:\n`;
+        for (const method of audioAPI.methods) {
+          response += `- **${method.name}**: ${method.description}\n`;
+        }
+        return response;
+      }
+    }
+    
+    // 코드 생성 요청
+    if (lowerQuery.includes('코드') || lowerQuery.includes('code') || lowerQuery.includes('예제')) {
+      if (lowerQuery.includes('audio') || lowerQuery.includes('볼륨')) {
+        return `## 🎵 Audio API 코드 예제\n\n\`\`\`javascript\n// 볼륨 음소거 설정\nwebOS.service.request('luna://com.webos.audio', {\n    method: 'setMuted',\n    parameters: {\n        muted: true\n    },\n    onSuccess: function(response) {\n        console.log('Volume muted successfully');\n    },\n    onFailure: function(error) {\n        console.error('Failed to mute volume:', error.errorText);\n    }\n});\n\`\`\``;
+      }
+    }
+    
+    // 일반적인 응답
+    return `## 🤖 webOS TV 개발 어시스턴트\n\n안녕하세요! webOS TV 개발을 도와드리는 AI 어시스턴트입니다.\n\n**다음과 같은 도움을 드릴 수 있습니다:**\n\n📋 **API 정보**: "webOS TV API 목록 알려줘"\n📚 **특정 API**: "Audio API 정보 알려줘"\n💻 **코드 생성**: "볼륨 조절 코드 만들어줘"\n\n구체적으로 질문해주시면 더 정확한 답변을 드릴 수 있습니다!`;
+    
+  } catch (error) {
+    console.error('Chat response generation error:', error);
+    return `❌ **응답 생성 중 오류가 발생했습니다:**\n\`\`\`\n${error}\n\`\`\``;
+  }
+}
 
 // Start server
 async function main() {

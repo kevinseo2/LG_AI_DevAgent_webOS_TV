@@ -4,6 +4,7 @@ import { MCPClient } from './services/mcp-client';
 import { WebOSCompletionProvider } from './providers/completion-provider';
 import { WebOSCodeActionProvider } from './providers/code-action-provider';
 import { WebOSHoverProvider } from './providers/hover-provider';
+import { WebOSChatParticipant } from './providers/chat-participant';
 
 let mcpClient: MCPClient;
 let apiProvider: WebOSAPIProvider;
@@ -28,6 +29,11 @@ export async function activate(context: vscode.ExtensionContext) {
         console.log('Registering providers...');
         registerProviders(context);
         console.log('Providers registered successfully');
+
+        // Register Chat Participant
+        console.log('Registering Chat Participant...');
+        registerChatParticipant(context);
+        console.log('Chat Participant registered successfully');
         
         // Register commands
         console.log('Registering commands...');
@@ -184,6 +190,20 @@ function registerCommands(context: vscode.ExtensionContext) {
             } else {
                 vscode.window.showErrorMessage('MCP Client not available');
             }
+        })
+    );
+}
+
+function registerChatParticipant(context: vscode.ExtensionContext) {
+    // Register Chat Participant
+    const chatParticipant = new WebOSChatParticipant(mcpClient);
+    
+    context.subscriptions.push(
+        vscode.chat.registerChatParticipant('webos-tv-assistant', chatParticipant, {
+            name: 'webOS TV Assistant',
+            description: 'webOS TV 개발을 위한 AI 어시스턴트',
+            fullName: 'webOS TV Development Assistant',
+            icon: new vscode.ThemeIcon('tv')
         })
     );
 }
